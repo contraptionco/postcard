@@ -6,6 +6,9 @@
           <tr>
             <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-950 sm:pl-6 md:pl-0">Email</th>
             <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-gray-950">Joined</th>
+            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 md:pr-0">
+              <span class="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -14,6 +17,9 @@
               <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-950 whitespace-nowrap sm:pl-6 md:pl-0"><%= subscription.email_address.email %></td>
               <td class="px-3 py-4 text-sm text-gray-700 whitespace-nowrap">
                 <%= local_time(subscription.verified_at, '%B %e, %Y') %>
+              </td>
+              <td class="relative py-4 pl-3 pr-4 text-right text-sm font-medium whitespace-nowrap sm:pr-6 md:pr-0">
+                <%= render 'subscribers/table_dropdown', subscription: subscription, account: @account %>
               </td>
             </tr>
           <% end %>
