@@ -25,7 +25,7 @@ class PagesController < ApplicationController
   private
 
   def account_params
-    params.require(:account).permit(:name, :slug, :photo, :cover, :description, :accent_color, :code)
+    params.require(:account).permit(:name, :slug, :photo, :cover, :description, :accent_color, :code, :wabi_sabi_mode)
   end
 
   def set_account

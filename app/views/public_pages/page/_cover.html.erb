@@ -1,11 +1,14 @@
 <%
 simple_mode = defined?(:simple_mode) ? simple_mode : false
+# Support both ActiveStorage attachments and raw blobs (for wabi-sabi mode)
+picture_is_blob = picture.is_a?(ActiveStorage::Blob)
+picture_attached = picture_is_blob || picture.attached?
 %>
-<% if picture.attached? %>
+<% if picture_attached %>
   <% widths = [400, 800, 1600, 3200, 6400 ] %>
 
   <picture>
-    <% unless simple_mode %>
+    <% unless simple_mode || picture_is_blob %>
       <source
         type="image/webp"
         srcset="
@@ -20,7 +23,7 @@ simple_mode = defined?(:simple_mode) ? simple_mode : false
       class="object-cover w-full bg-white <%= classes %>"
       src="<%= cdn_proxy_url(picture) %>"
       alt="<%= alt %>"
-      <% unless simple_mode %>
+      <% unless simple_mode || picture_is_blob %>
       srcset="
           <% widths.each do |width| %>
             <%= cdn_proxy_url(picture.variant(resize_to_limit: [width, nil])) %> <%= width %>w,

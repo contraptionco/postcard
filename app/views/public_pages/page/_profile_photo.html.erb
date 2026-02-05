@@ -1,8 +1,21 @@
+<%
+# Support optional photo parameter for wabi-sabi mode (can be a blob or attachment)
+photo_to_display = defined?(photo) && photo.present? ? photo : account.photo
+photo_is_blob = photo_to_display.is_a?(ActiveStorage::Blob)
+photo_attached = photo_is_blob || photo_to_display.attached?
+%>
 <div class="flex items-center justify-between public-page-container">
   <div class="-mt-16">
     <a class="flex" href="/">
-      <% if account.photo.attached? %>
-        <%= render "shared/square_picture_variants", picture: account.photo, size: 144, classes: "h-32 w-32 rounded-full ring-4 ring-white sm:h-36 sm:w-36 bg-white", alt: account.name %>
+      <% if photo_attached %>
+        <% if photo_is_blob %>
+          <%# Raw blob from wabi-sabi mode - display without variants %>
+          <img class="h-32 w-32 rounded-full ring-4 ring-white sm:h-36 sm:w-36 bg-white object-cover"
+               src="<%= cdn_proxy_url(photo_to_display) %>"
+               alt="<%= account.name %>" />
+        <% else %>
+          <%= render "shared/square_picture_variants", picture: photo_to_display, size: 144, classes: "h-32 w-32 rounded-full ring-4 ring-white sm:h-36 sm:w-36 bg-white", alt: account.name %>
+        <% end %>
       <% else %>
         <span class="inline-block w-32 h-32 overflow-hidden rounded-full bg-gray-075 ring-4 ring-white sm:h-36 sm:w-36">
           <svg class="w-full h-full text-gray-200" fill="currentColor" viewBox="0 0 24 24">

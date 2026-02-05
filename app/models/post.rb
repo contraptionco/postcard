@@ -9,6 +9,10 @@ class Post < ApplicationRecord
 
   has_many :email_messages, dependent: :destroy
 
+  # Wabi-sabi mode: store the photo and cover blob IDs at publish time
+  belongs_to :published_photo_blob, class_name: 'ActiveStorage::Blob', optional: true
+  belongs_to :published_cover_blob, class_name: 'ActiveStorage::Blob', optional: true
+
   has_rich_text :body
 
   validates :subject, presence: true, length: { maximum: 255 }
@@ -60,6 +64,40 @@ class Post < ApplicationRecord
     port = Rails.env.production? ? nil : ':3000'
     domain_host = account.host(show_unverified: show_unverified)
     "#{scheme}://#{domain_host}#{port}/posts/#{slug}"
+  end
+
+  # Wabi-sabi mode: snapshot the current account photo and cover when publishing
+  def snapshot_images!
+    self.published_photo_blob = account.photo.blob if account.photo.attached?
+    self.published_cover_blob = account.cover.blob if account.cover.attached?
+  end
+
+  # Get the appropriate photo for display based on wabi_sabi_mode
+  # Returns an ActiveStorage attachment-like object or nil
+  def display_photo
+    return account.photo unless account.wabi_sabi_mode?
+    return account.photo unless published_photo_blob.present?
+
+    published_photo_blob
+  end
+
+  # Get the appropriate cover for display based on wabi_sabi_mode
+  # Returns an ActiveStorage attachment-like object or nil
+  def display_cover
+    return account.cover unless account.wabi_sabi_mode?
+    return account.cover unless published_cover_blob.present?
+
+    published_cover_blob
+  end
+
+  # Check if display_photo returns a blob (historical) vs attachment (current)
+  def display_photo_is_blob?
+    account.wabi_sabi_mode? && published_photo_blob.present?
+  end
+
+  # Check if display_cover returns a blob (historical) vs attachment (current)
+  def display_cover_is_blob?
+    account.wabi_sabi_mode? && published_cover_blob.present?
   end
 
   private

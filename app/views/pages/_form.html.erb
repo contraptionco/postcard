@@ -129,6 +129,20 @@
       </div>
     </div>
 
+    <div class="pt-6 border-t border-gray-200">
+      <div class="flex items-start">
+        <div class="flex items-center h-5">
+          <%= f.check_box :wabi_sabi_mode, class: 'h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent' %>
+        </div>
+        <div class="ml-3">
+          <%= f.label :wabi_sabi_mode, 'Wabi-sabi mode', class: 'form-label' %>
+          <div class="form-description">
+            Show posts with your photo and cover image from the time they were published, rather than your current images. Embraces the beauty of change over time.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <%= render :partial => "shared/primary_button_loading", locals: { label: 'Publish', classes: " mt-12" } %>
   </div>
 <% end %>

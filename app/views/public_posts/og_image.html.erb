@@ -1,15 +1,37 @@
+<%
+# Wabi-sabi mode: use historical images from publish time if available
+display_cover = post.display_cover
+display_photo = post.display_photo
+cover_is_blob = display_cover.is_a?(ActiveStorage::Blob)
+photo_is_blob = display_photo.is_a?(ActiveStorage::Blob)
+cover_attached = cover_is_blob || display_cover&.attached?
+photo_attached = photo_is_blob || display_photo&.attached?
 
+# Generate cover URL (with variant if attachment, without if blob)
+if cover_attached
+  cover_url = cover_is_blob ? cdn_proxy_url(display_cover) : cdn_proxy_url(display_cover.variant(convert: :webp, resize_to_limit: [1920, nil]).processed)
+else
+  cover_url = asset_path('postcards.jpg')
+end
+
+# Generate photo URL (with variant if attachment, without if blob)
+if photo_attached
+  photo_url = photo_is_blob ? cdn_proxy_url(display_photo) : cdn_proxy_url(display_photo.variant(resize_to_fill: [288, 288, { crop: :attention }]).processed)
+else
+  photo_url = asset_path('logo/icon.png')
+end
+%>
 <div class="w-full bg-white h-screen">
   <div class="">
     <img
       class="object-cover w-full h-36 bg-gray-050"
-        src="<%= account.cover.attached? ? cdn_proxy_url(account.cover.variant(convert: :webp, resize_to_limit: [1920, nil]).processed) : asset_path('postcards.jpg') %>"
+        src="<%= cover_url %>"
       />
     <div class="px-36 flex justify-between items-center">
       <div class="-mt-24">
         <div class="flex">
           <img class="h-48 w-48 rounded-full ring-4 ring-white"
-            src="<%= account.photo.attached? ? cdn_proxy_url(account.photo.variant(resize_to_fill: [288, 288, { crop: :attention }]).processed) : asset_path('logo/icon.png') %>"
+            src="<%= photo_url %>"
             />
         </div>
       </div>

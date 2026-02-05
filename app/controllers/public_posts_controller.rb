@@ -23,7 +23,10 @@ class PublicPostsController < ApplicationController
   end
 
   def og_image
-    png = Rails.cache.fetch("post-#{@post.id}-#{@post.updated_at.to_i}-og-img-v0") do
+    # Include wabi_sabi_mode in cache key so toggling the setting busts the cache
+    # Also include account.updated_at since images may have changed
+    cache_key = "post-#{@post.id}-#{@post.updated_at.to_i}-#{@account.updated_at.to_i}-wabi-#{@account.wabi_sabi_mode}-og-img-v1"
+    png = Rails.cache.fetch(cache_key) do
       generate_og_image
     end
 

@@ -43,6 +43,7 @@ class DraftController < ApplicationController
       options[:status] = :bad_request unless @post.valid?
     when :review
       @post.published_at = Time.zone.now
+      @post.snapshot_images! # Wabi-sabi mode: capture current photo/cover for historical display
       @post.save!
       @post.send_newsletter
       @post.account.update(pinned_post: @post)
