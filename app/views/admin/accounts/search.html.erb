@@ -1,0 +1,96 @@
+<div class="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md mx-auto">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-gray-900">Account Search</h1>
+      <p class="mt-2 text-sm text-gray-600">Search for an account by email address</p>
+    </div>
+
+    <%= form_with url: admin_accounts_search_path, method: :get, class: "space-y-4" do |f| %>
+      <div>
+        <label for="q" class="sr-only">Email address</label>
+        <div class="relative">
+          <input
+            type="email"
+            name="q"
+            id="q"
+            value="<%= @query %>"
+            placeholder="user@example.com"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-3"
+            autofocus
+          >
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        Search
+      </button>
+    <% end %>
+
+    <% if @query.present? %>
+      <div class="mt-8">
+        <% if @account.present? %>
+          <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center space-x-4">
+              <% if @account.photo.attached? %>
+                <%= image_tag cdn_proxy_url(@account.photo.variant(:thumb)), class: "h-16 w-16 rounded-full object-cover" %>
+              <% else %>
+                <div class="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span class="text-gray-500 text-xl font-medium"><%= @account.name&.first&.upcase %></span>
+                </div>
+              <% end %>
+              <div class="flex-1 min-w-0">
+                <p class="text-lg font-medium text-gray-900 truncate"><%= @account.name %></p>
+                <p class="text-sm text-gray-500 truncate"><%= @account.email %></p>
+                <p class="text-sm text-gray-400">@<%= @account.slug %></p>
+              </div>
+            </div>
+
+            <div class="mt-6 flex space-x-3">
+              <%= link_to "View Dashboard", page_path(@account), class: "flex-1 text-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700" %>
+              <%= link_to "View Public Page", @account.url, target: "_blank", class: "flex-1 text-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" %>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <dl class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <dt class="text-gray-500">Created</dt>
+                  <dd class="text-gray-900"><%= @account.created_at.strftime("%b %d, %Y") %></dd>
+                </div>
+                <div>
+                  <dt class="text-gray-500">Posts</dt>
+                  <dd class="text-gray-900"><%= @account.posts.count %></dd>
+                </div>
+                <div>
+                  <dt class="text-gray-500">Subscribers</dt>
+                  <dd class="text-gray-900"><%= @account.subscriptions.count %></dd>
+                </div>
+                <div>
+                  <dt class="text-gray-500">Subscription</dt>
+                  <dd class="text-gray-900"><%= @account.active_subscription? ? "Active" : "None" %></dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        <% else %>
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                  No account found for <strong><%= @query %></strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

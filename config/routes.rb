@@ -27,6 +27,10 @@ Rails.application.routes.draw do
     mount PgHero::Engine, at: 'db', :constraints => { :host => Rails.configuration.base_host }
   end
 
+  namespace :admin, :constraints => { :host => Rails.configuration.base_host } do
+    get 'accounts/search', to: 'accounts#search', as: :accounts_search
+  end
+
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: '/letter_opener', :constraints => { :host => Rails.configuration.base_host }
   end

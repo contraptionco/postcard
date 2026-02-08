@@ -51,6 +51,12 @@ secondaryMenuItems = [
     show: @account&.active_subscription? && Rails.configuration.multiuser_mode
   },
   {
+    name: "Account Search",
+    newTab: false,
+    to: admin_accounts_search_path,
+    show: @account&.admin? && Rails.configuration.multiuser_mode
+  },
+  {
     name: "Queue",
     newTab: true,
     to: "/jobs",
