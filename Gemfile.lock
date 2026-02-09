@@ -211,6 +211,8 @@ GEM
       csv (>= 3.0.0)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    google-id-token (1.4.2)
+      jwt (>= 1)
     grover (1.1.7)
       combine_pdf (~> 1.0)
       nokogiri (~> 1.0)
@@ -604,6 +606,7 @@ DEPENDENCIES
   faker (~> 2.19)
   friendly_id (~> 5.4, >= 5.4.2)
   geocoder
+  google-id-token (~> 1.4)
   grover (~> 1.1)
   health_check (~> 3.1)
   honeypot-captcha (~> 1.0)
