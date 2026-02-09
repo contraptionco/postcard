@@ -1,0 +1,13 @@
+<% if !current_account && Rails.configuration.google_oauth[:client_id].present? %>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<div id="g_id_onload"
+     data-client_id="<%= Rails.configuration.google_oauth[:client_id] %>"
+     data-login_uri="<%= "#{request.protocol}#{Rails.configuration.base_host}/auth/google_one_tap/callback" %>"
+     data-auto_prompt="true"
+     data-context="signup"
+     data-ux_mode="popup"
+     data-auto_select="true"
+     data-itp_support="true">
+</div>
+<% end %>

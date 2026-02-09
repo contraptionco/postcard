@@ -43,6 +43,8 @@ Rails.application.routes.draw do
     sessions: 'accounts/sessions'
   }
 
+  post '/auth/google_one_tap/callback', to: 'google_one_tap#callback', :constraints => { :host => Rails.configuration.base_host }
+
   get '/' => 'marketing_pages#homepage', :constraints => { :host => Rails.configuration.base_host }
   get '/alternative/:slug' => 'marketing_pages#alternative', :constraints => { :host => Rails.configuration.base_host }
   get '/discover' => redirect('/'), :constraints => { :host => Rails.configuration.base_host }
