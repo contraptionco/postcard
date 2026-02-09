@@ -252,14 +252,14 @@ class Account < ApplicationRecord
 
   def attach_photo_from_url(url)
     filename = File.basename(URI.parse(url).path)
-    file = URI.open(url) # rubocop:disable Security/Open
+    file = safe_fetch_url(url, content_types: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
     photo.attach(io: file, filename: filename)
   end
 
   def attach_cover_from_url(url)
     filename = File.basename(URI.parse(url).path)
-    file = URI.open(url) # rubocop:disable Security/Open
+    file = safe_fetch_url(url, content_types: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
     cover.attach(io: file, filename: filename)
   end
@@ -288,6 +288,124 @@ class Account < ApplicationRecord
   end
 
   private
+
+  # Safely fetches content from a URL with SSRF protections
+  # @param url [String] The URL to fetch
+  # @param content_types [Array<String>] Allowed content types (nil for any)
+  # @param max_size [Integer] Maximum file size in bytes (default 10MB)
+  # @param timeout [Integer] Request timeout in seconds (default 5)
+  # @return [StringIO] The fetched content as a StringIO object
+  # @raise [ArgumentError] If URL is invalid or blocked
+  # @raise [StandardError] If fetch fails
+  def safe_fetch_url(url, content_types: nil, max_size: 10.megabytes, timeout: 5)
+    require 'net/http'
+    require 'ipaddr'
+
+    # Parse and validate URL
+    uri = URI.parse(url)
+
+    # Only allow http and https schemes
+    unless %w[http https].include?(uri.scheme&.downcase)
+      raise ArgumentError, "Invalid URL scheme: #{uri.scheme}. Only http and https are allowed."
+    end
+
+    # Block requests to private/internal IP ranges
+    validate_public_ip(uri.host)
+
+    # Fetch with timeout protection
+    response = fetch_with_redirect(uri, timeout: timeout, max_redirects: 3)
+
+    # Validate content type if specified
+    if content_types && !content_types.include?(response.content_type)
+      raise ArgumentError, "Invalid content type: #{response.content_type}. Expected one of: #{content_types.join(', ')}"
+    end
+
+    # Validate content length
+    content_length = response.content_length || response.body.bytesize
+    if content_length > max_size
+      raise ArgumentError, "File too large: #{content_length} bytes (max: #{max_size} bytes)"
+    end
+
+    StringIO.new(response.body)
+  rescue SocketError, Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
+    raise StandardError, "Failed to fetch URL: #{e.message}"
+  end
+
+  # Validates that the hostname resolves to a public IP address
+  def validate_public_ip(hostname)
+    # Resolve hostname to IP addresses
+    addresses = Addrinfo.getaddrinfo(hostname, nil, :UNSPEC, :STREAM).map(&:ip_address).uniq
+
+    addresses.each do |ip_str|
+      ip = IPAddr.new(ip_str)
+
+      # Block private IPv4 ranges
+      private_ranges = [
+        IPAddr.new('10.0.0.0/8'),        # Private network
+        IPAddr.new('172.16.0.0/12'),     # Private network
+        IPAddr.new('192.168.0.0/16'),    # Private network
+        IPAddr.new('127.0.0.0/8'),       # Loopback
+        IPAddr.new('169.254.0.0/16'),    # Link-local (AWS metadata)
+        IPAddr.new('224.0.0.0/4'),       # Multicast
+        IPAddr.new('240.0.0.0/4'),       # Reserved
+        IPAddr.new('0.0.0.0/8')          # Current network
+      ]
+
+      # Block private IPv6 ranges
+      if ip.ipv6?
+        private_ranges += [
+          IPAddr.new('::1/128'),         # Loopback
+          IPAddr.new('fc00::/7'),        # Unique local address
+          IPAddr.new('fe80::/10'),       # Link-local
+          IPAddr.new('ff00::/8')         # Multicast
+        ]
+      end
+
+      private_ranges.each do |range|
+        if range.include?(ip)
+          raise ArgumentError, "Access to private/internal IP addresses is not allowed: #{ip_str}"
+        end
+      end
+    end
+  end
+
+  # Fetches a URL following redirects with limits
+  def fetch_with_redirect(uri, timeout:, max_redirects:, redirect_count: 0)
+    raise ArgumentError, 'Too many redirects' if redirect_count > max_redirects
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = (uri.scheme == 'https')
+    http.open_timeout = timeout
+    http.read_timeout = timeout
+
+    request = Net::HTTP::Get.new(uri.request_uri)
+    request['User-Agent'] = 'Postcard/1.0'
+
+    response = http.request(request)
+
+    case response
+    when Net::HTTPSuccess
+      response
+    when Net::HTTPRedirection
+      # Validate redirect location before following
+      location = response['location']
+      redirect_uri = URI.parse(location)
+
+      # Handle relative redirects
+      redirect_uri = uri + location if redirect_uri.relative?
+
+      # Validate the redirect URL
+      unless %w[http https].include?(redirect_uri.scheme&.downcase)
+        raise ArgumentError, "Invalid redirect scheme: #{redirect_uri.scheme}"
+      end
+
+      validate_public_ip(redirect_uri.host)
+
+      fetch_with_redirect(redirect_uri, timeout: timeout, max_redirects: max_redirects, redirect_count: redirect_count + 1)
+    else
+      raise StandardError, "HTTP request failed: #{response.code} #{response.message}"
+    end
+  end
 
   def email_is_valid
     errors.add(email, "can't receive email") unless Truemail.valid?(email)
