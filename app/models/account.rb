@@ -250,18 +250,22 @@ class Account < ApplicationRecord
     account
   end
 
-  def attach_photo_from_url(url)
-    filename = File.basename(URI.parse(url).path)
-    file = URI.open(url) # rubocop:disable Security/Open
+  MAX_ATTACHMENT_SIZE = 10.megabytes
+  ALLOWED_IMAGE_CONTENT_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
+  URL_FETCH_TIMEOUT = 10 # seconds
 
-    photo.attach(io: file, filename: filename)
+  def attach_photo_from_url(url)
+    result = safe_fetch_image(url)
+    return unless result
+
+    photo.attach(io: result[:file], filename: result[:filename], content_type: result[:content_type])
   end
 
   def attach_cover_from_url(url)
-    filename = File.basename(URI.parse(url).path)
-    file = URI.open(url) # rubocop:disable Security/Open
+    result = safe_fetch_image(url)
+    return unless result
 
-    cover.attach(io: file, filename: filename)
+    cover.attach(io: result[:file], filename: result[:filename], content_type: result[:content_type])
   end
 
   def page_visits(from: nil, to: nil)
@@ -326,5 +330,71 @@ class Account < ApplicationRecord
     # WelcomeMailer.social_networks_over(self).deliver_later(wait: 3.days)
     # WelcomeMailer.why_have_personal_website(self).deliver_later(wait: 5.days)
     # WelcomeMailer.cool_uses_for_personal_website(self).deliver_later(wait: 7.days)
+  end
+
+  def safe_fetch_image(url)
+    uri = URI.parse(url)
+
+    # Validate URL scheme - only allow http/https
+    unless %w[http https].include?(uri.scheme&.downcase)
+      Rails.logger.warn "Rejected URL with invalid scheme: #{uri.scheme}"
+      return nil
+    end
+
+    # Fetch with timeout constraints
+    response = fetch_with_timeout(uri)
+    return nil unless response
+
+    # Validate content-type
+    content_type = response['content-type']&.split(';')&.first&.strip&.downcase
+    unless ALLOWED_IMAGE_CONTENT_TYPES.include?(content_type)
+      Rails.logger.warn "Rejected URL with invalid content-type: #{content_type}"
+      return nil
+    end
+
+    # Validate file size
+    body = response.body
+    if body.bytesize > MAX_ATTACHMENT_SIZE
+      Rails.logger.warn "Rejected URL with file size exceeding limit: #{body.bytesize} bytes"
+      return nil
+    end
+
+    filename = File.basename(uri.path).presence || 'image'
+    file = StringIO.new(body)
+
+    { file: file, filename: filename, content_type: content_type }
+  rescue URI::InvalidURIError, ArgumentError => e
+    Rails.logger.warn "Invalid URL: #{e.message}"
+    nil
+  end
+
+  def fetch_with_timeout(uri)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = (uri.scheme == 'https')
+    http.open_timeout = URL_FETCH_TIMEOUT
+    http.read_timeout = URL_FETCH_TIMEOUT
+
+    request = Net::HTTP::Get.new(uri)
+    response = http.request(request)
+
+    # Follow redirects (up to 3)
+    redirect_count = 0
+    while response.is_a?(Net::HTTPRedirection) && redirect_count < 3
+      redirect_uri = URI.parse(response['location'])
+      # Validate redirect URL scheme
+      unless %w[http https].include?(redirect_uri.scheme&.downcase)
+        Rails.logger.warn "Rejected redirect with invalid scheme: #{redirect_uri.scheme}"
+        return nil
+      end
+      response = Net::HTTP.get_response(redirect_uri)
+      redirect_count += 1
+    end
+
+    return nil unless response.is_a?(Net::HTTPSuccess)
+
+    response
+  rescue Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNREFUSED => e
+    Rails.logger.warn "Failed to fetch URL: #{e.message}"
+    nil
   end
 end
