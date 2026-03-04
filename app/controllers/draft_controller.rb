@@ -30,7 +30,7 @@ class DraftController < ApplicationController
     when :write
       @post.assign_attributes(post_params)
       @post.slug = nil # Resets FriendlyID
-      @post.save!(:validate => false)
+      @post.save!(context: :draft)
 
       unless params[:commit] == 'review'
         respond_to do |format|
