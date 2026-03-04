@@ -22,7 +22,7 @@ class Domain < ApplicationRecord
       return Domain.register_development_domains(account, host)
     end
 
-    response = Domain.render_service_request('', Net::HTTP::Post, "{\"name\":\"#{host}\"}")
+    response = Domain.render_service_request('', Net::HTTP::Post, { name: host }.to_json)
 
     unless response.code == '201'
       raise "Error creating domain #{host} in Render - code #{response.code} \"#{response.body}\""
