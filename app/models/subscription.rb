@@ -44,12 +44,14 @@ class Subscription < ApplicationRecord
   end
 
   def verify!
-    already_verified = verified_at.present?
-    self.verified_at = Time.zone.now
-    self.unsubscribed_at = nil
-    save!
+    with_lock do
+      already_verified = verified_at.present?
+      self.verified_at = Time.zone.now
+      self.unsubscribed_at = nil
+      save!
 
-    send_new_subscriber_notification unless already_verified
+      send_new_subscriber_notification unless already_verified
+    end
   end
 
   # Sends verification email.
