@@ -11,7 +11,7 @@ class PublishPostJob < ApplicationJob
 
       post.account.subscriptions.active.find_each do |subscription|
         AccountMailer.new_post(post, subscription).deliver_now
-      rescue Exception => e # rubocop:disable Lint/RescueException
+      rescue StandardError => e
         Rails.logger.error "Error sending post to #{subscription.email_address.email}: #{e}"
         # For AWS SES bounces and complaints, we may want to add specific error handling later
       end
