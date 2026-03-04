@@ -33,7 +33,4 @@ Rails.application.config.permissions_policy do |f|
 
   # Allow fullscreen only from same origin (for viewing postcards)
   f.fullscreen         :self
-
-  # Disable interest-based advertising features
-  f.interest_cohort    :none
 end
