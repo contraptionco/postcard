@@ -2,8 +2,11 @@
 
 class UnsubscriptionController < ApplicationController
   before_action :set_email_message, :set_account
+  before_action :require_email_message
 
   def show; end
+
+  def invalid_token; end
 
   def destroy
     raise 'cannot find subscription for unsubscription' if @email_message.subscription.blank?
@@ -18,5 +21,11 @@ class UnsubscriptionController < ApplicationController
 
   def set_email_message
     @email_message = EmailMessage.find_by(unsubscribe_token: params[:token])
+  end
+
+  def require_email_message
+    return if @email_message.present?
+
+    render :invalid_token, status: :not_found
   end
 end
