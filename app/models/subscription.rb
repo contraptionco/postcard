@@ -14,6 +14,15 @@ class Subscription < ApplicationRecord
 
   enum source: { signup: 0, invite: 1, import: 2 }, _prefix: true
   validates :source, presence: true
+  validates :email_address_id, uniqueness: { scope: :account_id, message: 'is already subscribed to this account' }
+
+  # Handle race condition: if DB constraint fires despite find_or_create_by,
+  # find the existing record instead of raising
+  def self.find_or_create_by_with_rescue(attributes, &block)
+    find_or_create_by(attributes, &block)
+  rescue ActiveRecord::RecordNotUnique
+    find_by!(attributes)
+  end
 
   def active?
     !!verified_at && !unsubscribed_at

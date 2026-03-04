@@ -13,8 +13,8 @@ class SubscribersImportJob < ApplicationJob
       email_address = EmailAddress.find_or_create_by(email: email)
 
       Subscription.create_with(source: :import, subscribers_import: subscribers_import, verified_at: Time.zone.now) \
-                  .find_or_create_by(email_address: email_address,
-                                     account: account)
+                  .find_or_create_by_with_rescue(email_address: email_address,
+                                                 account: account)
     end
   end
 end

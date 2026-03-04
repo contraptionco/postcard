@@ -159,10 +159,9 @@ class Account < ApplicationRecord
     updates = Account.find_by(slug: 'updates')
     return if updates.blank?
 
-    # Ok if this fails
+    # Ok if this fails - use rescue helper to handle race conditions
     Subscription.create_with(source: :signup, verified_at: Time.zone.now) \
-                .where(account: updates, email_address: EmailAddress.find_or_create_by(email: email)) \
-                .first_or_create
+                .find_or_create_by_with_rescue(account: updates, email_address: EmailAddress.find_or_create_by(email: email))
   end
 
   def unsubscribe_from_updates

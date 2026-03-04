@@ -16,8 +16,8 @@ class PublicPagesController < ApplicationController
     @email_address = EmailAddress.find_or_create_by(email: (params.dig(:email_address, :email) || params[:email]).strip.downcase)
     return render :show, status: :bad_request unless @email_address.valid?
 
-    @subscription = Subscription.create_with(source: :signup).find_or_create_by(email_address: @email_address,
-                                                                                account: @account)
+    @subscription = Subscription.create_with(source: :signup).find_or_create_by_with_rescue(email_address: @email_address,
+                                                                                            account: @account)
 
     return redirect_to '/', notice: ALREADY_SUBSCRIBED_MESSAGE if @subscription.active?
 
