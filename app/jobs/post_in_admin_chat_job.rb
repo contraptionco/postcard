@@ -18,7 +18,7 @@ class PostInAdminChatJob < ApplicationJob
     request = Net::HTTP::Post.new(uri, "Content-Type" => "text/plain; charset=utf-8")
     request.body = message
 
-    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https", open_timeout: 5, read_timeout: 10) do |http|
       http.request(request)
     end
 
