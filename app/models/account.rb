@@ -31,6 +31,7 @@ class Account < ApplicationRecord
   validate :email_is_valid, on: :create
   validates :name, presence: true
   validates :accent_color, format: { with: /\A#[0-9a-fA-F]{6}\z/ }, allow_nil: true
+  validate :pinned_post_belongs_to_account
   VALID_SLUG_REGEX = /\A[a-z0-9]+(-[a-z0-9]+)*\z/
   validates :slug, presence: true, length: { minimum: 2, maximum: 255 },
                    format: { with: VALID_SLUG_REGEX, message: "can only contain letters, numbers and '-'" },
@@ -291,6 +292,14 @@ class Account < ApplicationRecord
 
   def email_is_valid
     errors.add(email, "can't receive email") unless Truemail.valid?(email)
+  end
+
+  def pinned_post_belongs_to_account
+    return if pinned_post_id.blank?
+
+    unless posts.exists?(id: pinned_post_id)
+      errors.add(:pinned_post, 'must belong to this account')
+    end
   end
 
   def downcase_slug
