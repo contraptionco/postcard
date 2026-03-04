@@ -5,6 +5,8 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
+  <%= preload_link_tag asset_path("Inter-roman.latin.var.woff2"), as: "font", type: "font/woff2", crossorigin: "anonymous" %>
+  <style>@font-face { font-family: 'Inter var'; font-display: optional; src: url(<%= asset_path("Inter-roman.latin.var.woff2") %>) format('woff2'); font-style: normal; font-weight: 100 900; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }</style>
   <%= stylesheet_link_tag "application.tailwind", "data-turbo-track": "reload" %>
 
   <%# https://github.com/rails/importmap-rails/issues/65 %>
