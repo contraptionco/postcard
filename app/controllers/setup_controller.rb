@@ -4,7 +4,6 @@ class SetupController < ApplicationController
   prepend_before_action :authenticate_account!
   before_action :set_account_from_path
   before_action :redirect_in_solo
-  before_action :redirect_in_solo
 
   include Wicked::Wizard
 
