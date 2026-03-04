@@ -31,9 +31,6 @@ Rails.application.config.permissions_policy do |f|
   f.autoplay           :none
   f.picture_in_picture :none
 
-  # Disable VR/XR features
-  f.xr_spatial_tracking :none
-
   # Allow fullscreen only from same origin (for viewing postcards)
   f.fullscreen         :self
 
