@@ -39,7 +39,7 @@ class Domain < ApplicationRecord
     end
   end
 
-  LOCALHOST_DOMAINS = ['lvh.me', 'fuf.me', 'fbi.com'].freeze
+  LOCALHOST_DOMAINS = ['lvh.me', 'fuf.me'].freeze
   def self.localhost_domain?(domain)
     LOCALHOST_DOMAINS.each do |haystack|
       return true if (domain == haystack) || domain.ends_with?(".#{haystack}")
