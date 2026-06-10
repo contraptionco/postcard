@@ -4,6 +4,7 @@ require 'test_helper'
 
 class AccountControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
+  include ActiveJob::TestHelper
 
   setup do
     @original_solo_mode = Rails.configuration.solo_mode
@@ -27,16 +28,29 @@ class AccountControllerTest < ActionDispatch::IntegrationTest
     Rails.configuration.multiuser_mode = false
   end
 
-  test 'destroy deletes the account and its associated data with correct confirmation' do
+  test 'destroy locks the account, signs out, and enqueues deletion with correct confirmation' do
     use_multiuser_mode
     sign_in @account
-    @account.posts.create!(subject: 'Hello world', body: 'My first post')
 
-    assert_difference -> { Account.count } => -1, -> { Post.unscoped.count } => -1 do
+    assert_enqueued_with(job: DestroyAccountJob, args: [@account]) do
       delete page_account_path(@account), params: { confirmation: @account.postcard_host }
     end
 
     assert_redirected_to root_path
+    assert @account.reload.access_locked?
+  end
+
+  test 'enqueued deletion removes the account and its associated data' do
+    use_multiuser_mode
+    sign_in @account
+    @account.posts.create!(subject: 'Hello world', body: 'My first post')
+
+    delete page_account_path(@account), params: { confirmation: @account.postcard_host }
+
+    assert_difference -> { Account.count } => -1, -> { Post.unscoped.count } => -1 do
+      perform_enqueued_jobs(only: DestroyAccountJob)
+    end
+
     assert_not Account.exists?(@account.id)
   end
 
@@ -44,7 +58,7 @@ class AccountControllerTest < ActionDispatch::IntegrationTest
     use_multiuser_mode
     sign_in @account
 
-    assert_difference 'Account.count', -1 do
+    assert_enqueued_with(job: DestroyAccountJob) do
       delete page_account_path(@account), params: { confirmation: " #{@account.postcard_host.upcase} " }
     end
 
@@ -55,23 +69,23 @@ class AccountControllerTest < ActionDispatch::IntegrationTest
     use_multiuser_mode
     sign_in @account
 
-    assert_no_difference 'Account.count' do
+    assert_no_enqueued_jobs(only: DestroyAccountJob) do
       delete page_account_path(@account), params: { confirmation: 'wrong-address' }
     end
 
     assert_redirected_to edit_page_path(@account)
-    assert Account.exists?(@account.id)
+    assert_not @account.reload.access_locked?
   end
 
   test 'destroy is not available in solo mode' do
     use_solo_mode
     sign_in @account
 
-    assert_no_difference 'Account.count' do
+    assert_no_enqueued_jobs(only: DestroyAccountJob) do
       delete page_account_path(@account), params: { confirmation: @account.postcard_host }
     end
 
-    assert Account.exists?(@account.id)
+    assert_not @account.reload.access_locked?
   end
 
   test 'cannot destroy another account' do
@@ -79,18 +93,18 @@ class AccountControllerTest < ActionDispatch::IntegrationTest
     other_account = accounts(:grandfathered_user)
     sign_in @account
 
-    assert_no_difference 'Account.count' do
+    assert_no_enqueued_jobs(only: DestroyAccountJob) do
       delete page_account_path(other_account), params: { confirmation: other_account.postcard_host }
     end
 
     assert_redirected_to page_path(@account)
-    assert Account.exists?(other_account.id)
+    assert_not other_account.reload.access_locked?
   end
 
   test 'destroy requires authentication' do
     use_multiuser_mode
 
-    assert_no_difference 'Account.count' do
+    assert_no_enqueued_jobs(only: DestroyAccountJob) do
       delete page_account_path(@account), params: { confirmation: @account.postcard_host }
     end
 

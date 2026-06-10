@@ -29,15 +29,21 @@ class AccountController < ApplicationController
 
     begin
       cancel_billing
-    rescue Pay::Error => e
+    rescue Pay::Error, ::Stripe::StripeError => e
       Rails.logger.error "Failed to cancel billing while deleting account #{@account.id}: #{e.message}"
       return redirect_to edit_page_path(@account),
                          alert: 'We could not cancel your billing subscription, so your account was not deleted. Please contact support.'
     end
 
-    @account.destroy!
+    # Lock the account so sign-in is blocked and the public page goes offline
+    # immediately, then delete the data in the background — established
+    # accounts have too many analytics, subscriber, and email rows to delete
+    # within a request.
+    @account.lock_access!
+    DestroyAccountJob.perform_later(@account)
     sign_out @account
-    redirect_to root_path, notice: 'Your account and all of its data have been permanently deleted.'
+    redirect_to root_path,
+                notice: 'Your account has been deleted. Your page is now offline, and all of your data will be removed shortly.'
   end
 
   private
@@ -46,10 +52,30 @@ class AccountController < ApplicationController
     params[:confirmation].to_s.strip.downcase == @account.postcard_host.downcase
   end
 
-  # Destroying Pay::Customer records cascades to Pay::Subscription, whose
-  # before_destroy cancels any active subscription at the payment processor.
+  # Deleting the customer at Stripe immediately cancels ALL of their
+  # subscriptions, including past_due ones that Pay's cancel helpers skip, and
+  # scrubs the customer's details from Stripe. This must happen synchronously:
+  # Pay's own cancel-on-destroy callback swallows API errors, which could
+  # leave a subscription billing forever with no local record of it.
   def cancel_billing
-    @account.pay_customers.each(&:destroy!)
+    @account.pay_customers.each do |pay_customer|
+      delete_stripe_customer(pay_customer)
+
+      # Keep local records consistent so Pay's cancel-on-destroy callback
+      # doesn't make a doomed API call when DestroyAccountJob removes them.
+      pay_customer.subscriptions.active.each do |subscription|
+        subscription.update!(status: 'canceled', ends_at: Time.current)
+      end
+    end
+  end
+
+  def delete_stripe_customer(pay_customer)
+    return unless pay_customer.processor == 'stripe' && pay_customer.processor_id.present?
+
+    ::Stripe::Customer.delete(pay_customer.processor_id)
+  rescue ::Stripe::InvalidRequestError => e
+    # Already deleted at Stripe — nothing left to cancel.
+    raise unless e.message.include?('No such customer')
   end
 
   def account_params

@@ -39,9 +39,9 @@
 <h3>Cancel my account</h3>
 
 <% if Rails.configuration.multiuser_mode %>
-  <p>Unhappy? <%= link_to "Delete your account", edit_page_path(resource) %> from your page settings.</p>
+  <p>Done with Postcard? <%= link_to "Delete your account", edit_page_path(resource) %> from your page settings.</p>
 <% else %>
-  <p>Unhappy? <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete %></p>
+  <p>Done with Postcard? <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete %></p>
 <% end %>
 
 <%= link_to "Back", :back %>
