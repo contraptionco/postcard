@@ -70,8 +70,8 @@ secondaryMenuItems = [
   },
   {
     name: Rails.configuration.solo_mode ? "Report an issue" : "Contact support",
-    newTab: true,
-    to: Rails.configuration.solo_mode ? 'https://github.com/contraptionco/postcard/issues/new' : 'mailto:postcard@contraption.co',
+    newTab: Rails.configuration.solo_mode,
+    to: Rails.configuration.solo_mode ? 'https://github.com/contraptionco/postcard/issues/new' : page_support_path(@account),
     show: true,
   },
   {
