@@ -23,7 +23,7 @@ class AccountController < ApplicationController
       return redirect_to page_path(current_account), alert: 'You can only delete your own account.'
     end
     unless confirmation_matches?
-      return redirect_to edit_page_path(@account),
+      return redirect_to page_support_path(@account),
                          alert: "The confirmation didn't match #{@account.postcard_host}, so your account was not deleted."
     end
 
@@ -31,7 +31,7 @@ class AccountController < ApplicationController
       cancel_billing
     rescue Pay::Error, ::Stripe::StripeError => e
       Rails.logger.error "Failed to cancel billing while deleting account #{@account.id}: #{e.message}"
-      return redirect_to edit_page_path(@account),
+      return redirect_to page_support_path(@account),
                          alert: 'We could not cancel your billing subscription, so your account was not deleted. Please contact support.'
     end
 

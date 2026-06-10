@@ -73,7 +73,7 @@ class AccountControllerTest < ActionDispatch::IntegrationTest
       delete page_account_path(@account), params: { confirmation: 'wrong-address' }
     end
 
-    assert_redirected_to edit_page_path(@account)
+    assert_redirected_to page_support_path(@account)
     assert_not @account.reload.access_locked?
   end
 
@@ -120,7 +120,7 @@ class AccountControllerTest < ActionDispatch::IntegrationTest
       delete account_registration_path
     end
 
-    assert_redirected_to edit_page_path(@account)
+    assert_redirected_to page_support_path(@account)
     assert Account.exists?(@account.id)
   end
 end

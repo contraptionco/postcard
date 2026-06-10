@@ -38,8 +38,8 @@ module Accounts
     # which requires typed confirmation and cancels billing first.
     def destroy
       if Rails.configuration.multiuser_mode
-        redirect_to edit_page_path(current_account),
-                    notice: 'To delete your account, use the "Delete account" section at the bottom of your page settings.'
+        redirect_to page_support_path(current_account),
+                    notice: 'To delete your account, use the "Delete account" section on the support page.'
       else
         super
       end
