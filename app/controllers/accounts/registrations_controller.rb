@@ -34,6 +34,17 @@ module Accounts
       current_account.enrich if current_account&.persisted?
     end
 
+    # In multiuser mode, account deletion goes through AccountController#destroy,
+    # which requires typed confirmation and cancels billing first.
+    def destroy
+      if Rails.configuration.multiuser_mode
+        redirect_to edit_page_path(current_account),
+                    notice: 'To delete your account, use the "Delete account" section at the bottom of your page settings.'
+      else
+        super
+      end
+    end
+
     def after_sign_up_path_for(account)
       if Rails.configuration.multiuser_mode
         page_checkout_path(account)
