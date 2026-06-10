@@ -3,4 +3,68 @@
   <div class="my-6 mb-12">
     <%= render 'form', account: @account %>
   </div>
+
+  <% if Rails.configuration.multiuser_mode && @account == current_account %>
+    <div
+      class="pt-8 mb-12 border-t border-gray-200"
+      data-controller="delete-account"
+      data-delete-account-expected-value="<%= @account.postcard_host %>">
+      <h2 class="text-lg font-semibold text-red-700">Delete account</h2>
+      <p class="mt-1 text-sm text-gray-600">
+        Permanently delete your account, including your page, posts, subscribers, and analytics. This cannot be undone.
+      </p>
+      <button
+        type="button"
+        class="mt-4 btn text-red-700 bg-white !border-red-700 hover:bg-red-50"
+        data-action="click->delete-account#open">
+        Delete my account&hellip;
+      </button>
+
+      <!-- Confirmation modal -->
+      <div
+        data-delete-account-target="modal"
+        data-action="click->delete-account#closeBackground keyup@window->delete-account#closeWithKeyboard"
+        class="fixed inset-0 flex items-center justify-center hidden min-h-screen overflow-y-auto bg-gray-100/70 min-w-screen"
+        style="z-index: 40;">
+        <div class="w-full max-w-lg max-h-screen p-4">
+          <div class="m-1 bg-white rounded-lg shadow">
+            <div class="p-8">
+              <h2 class="pb-3 text-2xl font-semibold text-center text-gray-925">Delete your account?</h2>
+              <p class="text-sm text-gray-600">
+                This permanently deletes <strong><%= @account.postcard_host %></strong> &mdash; your page, posts,
+                subscribers, custom domains, and analytics. Any active subscription will be canceled.
+                This cannot be undone.
+              </p>
+
+              <%= form_with url: page_account_path(@account), method: :delete, data: { turbo: false } do %>
+                <label for="confirmation" class="block mt-6 text-sm text-gray-600">
+                  Type <span class="font-mono font-semibold select-all"><%= @account.postcard_host %></span> to confirm:
+                </label>
+                <%= text_field_tag :confirmation, nil,
+                  class: 'form-input mt-2',
+                  autocomplete: 'off',
+                  autocapitalize: 'none',
+                  spellcheck: false,
+                  placeholder: @account.postcard_host,
+                  data: { delete_account_target: 'input', action: 'input->delete-account#check' } %>
+
+                <div class="flex items-center justify-between mt-6">
+                  <button type="button" class="link" data-action="click->delete-account#close">
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled
+                    data-delete-account-target="submit"
+                    class="btn text-white bg-red-700 !border-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Permanently delete
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
 </div>

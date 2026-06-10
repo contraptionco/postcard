@@ -62,6 +62,7 @@ Rails.application.routes.draw do
       resources :draft
     end
     put 'account', to: 'account#update'
+    delete 'account', to: 'account#destroy'
     get 'checkout', to: 'checkout#show', as: :checkout
     get 'billing', to: 'billing#show', as: :billing
   end
