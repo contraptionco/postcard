@@ -1,11 +1,19 @@
 default: &default
   dispatchers:
-    - polling_interval: 1
+    - polling_interval: 60
       batch_size: 500
+      concurrency_maintenance: false
       recurring_tasks:
-        verify_domains:
+        verify_recent_domains:
           class: VerifyDomainsJob
-          schedule: every 1 minute
+          args:
+            - recent
+          schedule: every 15 minutes
+        verify_stale_domains:
+          class: VerifyDomainsJob
+          args:
+            - stale
+          schedule: "0 4 * * * America/New_York"
         enqueue_analytics_summary_emails:
           class: EnqueueAnalyticsSummaryEmailsJob
           schedule: "0 0 10 * * * America/New_York"
@@ -20,9 +28,9 @@ default: &default
           schedule: "0 3 * * * America/New_York"
   workers:
     - queues: "*"
-      threads: 1
-      processes: 2
-      polling_interval: 1
+      threads: 2
+      processes: 1
+      polling_interval: 30
 
 development:
  <<: *default
