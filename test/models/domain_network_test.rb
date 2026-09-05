@@ -26,7 +26,7 @@ class DomainNetworkTest < ActiveSupport::TestCase
     Rails.configuration.solo_mode = false
     requests = []
     response = DomainTestResponse.new('201', '[]')
-    host = 'example.test","extra":"value'
+    host = 'example.photography'
 
     Domain.stub(:render_service_request, ->(path, method, body) { requests << [path, method, JSON.parse(body)]; response }) do
       Domain.register(accounts(:new_user), host)
@@ -58,4 +58,28 @@ class DomainNetworkTest < ActiveSupport::TestCase
     %w[lvh.me test.lvh.me fuf.me test.fuf.me].each { |host| assert Domain.localhost_domain?(host) }
     %w[fbi.com test.fbi.com example.com fakelvh.me].each { |host| refute Domain.localhost_domain?(host) }
   end
+
+  test 'invalid custom domains are rejected before registration side effects' do
+    previous_solo_mode = Rails.configuration.solo_mode
+    Rails.configuration.solo_mode = false
+    requests = []
+    Domain.stub(:render_service_request, ->(*) { requests << true }) do
+      ['example.test","extra":"value', 'http://example.test', '-bad.example', 'bad-.example',
+       'a' * 64 + '.example', '127.0.0.1', nil].each do |host|
+        assert_raises(ActiveRecord::RecordInvalid) { Domain.register(accounts(:new_user), host) }
+      end
+    end
+    assert_empty requests
+  ensure
+    Rails.configuration.solo_mode = previous_solo_mode
+  end
+
+  test 'custom domains support long and internationalized suffixes with normalized labels' do
+    %w[example.design example.studio example.photography example.xn--p1ai].each do |host|
+      domain = Domain.new(account: accounts(:new_user), domain: " #{host.upcase} ")
+      assert domain.valid?, domain.errors.full_messages.join(', ')
+      assert_equal host, domain.domain
+    end
+  end
+
 end

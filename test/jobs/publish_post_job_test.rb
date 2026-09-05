@@ -4,6 +4,7 @@ require 'test_helper'
 require 'minitest/mock'
 
 class PublishPostJobTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
   setup do
     @post = accounts(:new_user).posts.create!(subject: 'Hello', body: 'Post body', published_at: Time.current)
     2.times do |index|
@@ -33,4 +34,13 @@ class PublishPostJobTest < ActiveSupport::TestCase
     end
     refute @post.reload.finished_sending?
   end
+
+  test 'queued newsletter does not send after the author account is locked' do
+    @post.account.update!(locked_at: Time.current)
+    AccountMailer.stub(:new_post, ->(*) { flunk 'Locked accounts must not send newsletters' }) do
+      assert_no_enqueued_jobs { PublishPostJob.perform_now(@post.reload) }
+    end
+    refute @post.reload.finished_sending?
+  end
+
 end

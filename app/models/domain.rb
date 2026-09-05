@@ -3,7 +3,7 @@
 class Domain < ApplicationRecord
   class RenderRateLimitError < StandardError; end
 
-  before_save :downcase_domain
+  before_validation :downcase_domain
   before_destroy :destroy_in_render
   belongs_to :account, touch: true
 
@@ -11,14 +11,19 @@ class Domain < ApplicationRecord
 
   after_update_commit :post_verification_tasks, :if => :saved_change_to_verified?
 
-  VALID_DOMAIN_REGEX = /\A[a-z0-9]+([\-.]{1}[a-z0-9]+)*\.[a-z]{2,5}\z/
-  validates :domain, presence: true,
+  VALID_DOMAIN_REGEX = /\A(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])\z/
+  validates :domain, presence: true, length: { maximum: 253 },
                      format: { with: VALID_DOMAIN_REGEX },
                      uniqueness: true
 
   def self.register(account, host) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     raise 'Custom domains disabled in SOLO mode' if Rails.configuration.solo_mode
-    raise 'domains already set' if account.domains.length.positive?
+    raise 'domains already set' if account.domains.exists?
+
+    candidate = new(account: account, domain: host)
+    raise ActiveRecord::RecordInvalid, candidate unless candidate.valid?
+
+    host = candidate.domain
 
     if Rails.env.development? && Domain.localhost_domain?(host)
       return Domain.register_development_domains(account, host)
@@ -134,7 +139,7 @@ class Domain < ApplicationRecord
   end
 
   def downcase_domain
-    self.domain = domain.downcase
+    self.domain = domain.to_s.strip.downcase
   end
 
   def destroy_in_render

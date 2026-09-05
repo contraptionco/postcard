@@ -5,6 +5,8 @@ class PublishPostJob < ApplicationJob
 
   def perform(*posts) # rubocop:disable Metrics/MethodLength
     posts.each do |post|
+      next if post.account.access_locked?
+
       raise 'not published' unless post.published?
 
       PostInAdminChatJob.perform_later "[New post - #{post.account.email}] #{post.subject} #{post.url}"
