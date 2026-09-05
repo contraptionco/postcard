@@ -53,6 +53,42 @@ class PublicFormatsTest < ActionDispatch::IntegrationTest
     assert_select "a[href='http://#{@account.postcard_host}:4321/posts/#{@public_post.slug}.md']", text: 'Read as Markdown'
   end
 
+  test 'cached public pages keep reader links on the current request origin' do
+    use_multiuser_mode
+    cache_store = ActiveSupport::Cache::MemoryStore.new
+    controllers = [PublicPagesController, PublicPostsController]
+    original_settings = controllers.map { |controller| [controller, controller.perform_caching, controller.cache_store] }
+    controllers.each do |controller|
+      controller.perform_caching = true
+      controller.cache_store = cache_store
+    end
+    cache_hits = 0
+    count_cache_hits = ->(*args) { cache_hits += 1 if args.last[:hit] }
+
+    ActiveSupport::Notifications.subscribed(count_cache_hits, 'cache_read.active_support') do
+      [[false, 3000], [false, 4321], [true, 443]].each do |secure, port|
+        https! secure
+        host! "#{@account.postcard_host}:#{port}"
+        origin = "#{secure ? 'https' : 'http'}://#{@account.postcard_host}#{secure ? '' : ":#{port}"}"
+
+        ['/', public_posts_path].each do |path|
+          2.times do
+            get path
+            assert_response :success
+            assert_select "a[href='#{origin}/posts.rss']", text: 'RSS feed'
+            assert_select "a[href='#{origin}/posts.md']", text: 'Posts as Markdown'
+          end
+        end
+      end
+    end
+    assert_operator cache_hits, :>, 0
+  ensure
+    original_settings&.each do |controller, enabled, store|
+      controller.perform_caching = enabled
+      controller.cache_store = store
+    end
+  end
+
   test 'direct unlisted and hidden Markdown stays available without appearing in feeds' do
     use_multiuser_mode
     host! @account.postcard_host
