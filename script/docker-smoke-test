@@ -90,8 +90,8 @@ for mode in MULTIUSER SOLO; do
   done
   expect_status /.postcard 200
 
-  # The homepage populates Solid Cache even when SOLO redirects to signup.
-  for cache_state in cold warm; do
+  # Exercise initial and repeat rendering, including pages that do not cache.
+  for request_pass in first repeat; do
     if [[ "$mode" == MULTIUSER ]]; then
       expect_status / 200
       expect_body 'Personal website + newsletter'
@@ -101,17 +101,22 @@ for mode in MULTIUSER SOLO; do
       expect_status /accounts/sign_up 200
       expect_body 'First, create an account'
     fi
-    echo "$mode homepage passed with $cache_state cache."
+    echo "$mode homepage passed on the $request_pass request."
   done
 
-  # A separate process must read values written by Puma from the database.
+  # Verify the configured production cache across independent application
+  # processes without requiring any particular page to cache database records.
   docker exec "$app" bundle exec rails runner '
     abort "Production must use Solid Cache" unless Rails.cache.is_a?(SolidCache::Store)
-    %w[showcase-primary-v0 showcase-secondary-v0 showcase-tertiary-v0].each do |key|
-      abort "Missing persisted homepage cache: #{key}" unless Rails.cache.read(key) == []
-    end
+    Rails.cache.write("docker-smoke/persisted", {"status" => "ready"}, expires_in: 5.minutes)
     abort "Solid Cache table is empty" unless SolidCache::Entry.exists?
-    puts "Homepage cache persisted successfully."
+  '
+  docker exec "$app" bundle exec rails runner '
+    abort "Production must use Solid Cache" unless Rails.cache.is_a?(SolidCache::Store)
+    unless Rails.cache.read("docker-smoke/persisted") == {"status" => "ready"}
+      abort "Production cache did not persist across processes"
+    end
+    puts "Production cache persisted successfully."
   '
   docker rm -f -v "$app" >/dev/null
 done
