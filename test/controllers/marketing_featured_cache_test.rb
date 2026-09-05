@@ -39,7 +39,7 @@ class MarketingFeaturedCacheTest < ActionDispatch::IntegrationTest
     test "warm marketing cache stops exposing a post immediately after it becomes #{state}" do
       with_production_cache do
         get '/'
-        assert_featured_in_both_previews(@post)
+        assert_featured_content(@post)
 
         # Exercise real persistence and pin-removal callbacks after warming the
         # cache. Neither the test nor production code clears the cache.
@@ -54,7 +54,7 @@ class MarketingFeaturedCacheTest < ActionDispatch::IntegrationTest
   test 'warm marketing cache immediately reflects removal of the featured pin' do
     with_production_cache do
       get '/'
-      assert_featured_in_both_previews(@post)
+      assert_featured_content(@post)
 
       @account.update!(pinned_post: nil)
 
@@ -68,7 +68,7 @@ class MarketingFeaturedCacheTest < ActionDispatch::IntegrationTest
   test 'warm marketing cache shows a replacement pin instead of the previous post' do
     with_production_cache do
       get '/'
-      assert_featured_in_both_previews(@post)
+      assert_featured_content(@post)
 
       replacement = @account.posts.create!(
         subject: 'Replacement feature title', body: 'Replacement feature body', published_at: Time.current
@@ -77,7 +77,7 @@ class MarketingFeaturedCacheTest < ActionDispatch::IntegrationTest
 
       get '/'
       assert_feature_absent(@post)
-      assert_featured_in_both_previews(replacement)
+      assert_featured_content(replacement)
     end
   end
 
@@ -94,7 +94,7 @@ class MarketingFeaturedCacheTest < ActionDispatch::IntegrationTest
   test 'warm marketing cache stops featuring an account after it is locked' do
     with_production_cache do
       get '/'
-      assert_featured_in_both_previews(@post)
+      assert_featured_content(@post)
       @account.update!(locked_at: Time.current)
 
       get '/'
@@ -111,11 +111,11 @@ class MarketingFeaturedCacheTest < ActionDispatch::IntegrationTest
     Rails.env.stub(:production?, true, &block)
   end
 
-  def assert_featured_in_both_previews(post)
+  def assert_featured_content(post)
     assert_response :success
-    assert_select 'p', text: post.subject, count: 1 # Hero's public-page card
     assert_select 'p', text: "I just published \"#{post.subject}\" on my website - check it out:", count: 1
-    assert_includes response.body, post.body.to_plain_text
+    assert_select 'img[alt=?]', post.subject, count: 1
+    assert_includes response.body, post.slug
   end
 
   def assert_feature_absent(post, check_url: true)
