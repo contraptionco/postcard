@@ -45,12 +45,11 @@ class DestroyAccountJob < ApplicationJob
       references = global_ids_in(queued_job.arguments)
       next if references.empty? || !references.all? { |reference| account_owns_reference?(account, reference) }
 
-      queued_job.with_lock do
-        # A running worker must retain its execution record, including this job.
-        queued_job.destroy! unless queued_job.claimed_execution.present? || queued_job.finished?
-      end
-    rescue ActiveRecord::RecordNotFound
-      # A worker may finish/remove a queued job while this sweep runs.
+      # Solid Queue locks the execution before deletion and refuses to discard
+      # claimed jobs, avoiding a race with workers claiming ready executions.
+      queued_job.discard
+    rescue ActiveRecord::RecordNotFound, SolidQueue::Execution::UndiscardableError
+      # A worker may claim or finish a queued job while this sweep runs.
       next
     end
   end
