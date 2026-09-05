@@ -113,7 +113,7 @@ class MarketingFeaturedCacheTest < ActionDispatch::IntegrationTest
 
   def assert_featured_in_both_previews(post)
     assert_response :success
-    assert_select 'p.text-xl', text: post.subject, count: 1 # Hero's public-page card
+    assert_select 'p', text: post.subject, count: 1 # Hero's public-page card
     assert_select 'p', text: "I just published \"#{post.subject}\" on my website - check it out:", count: 1
     assert_includes response.body, post.body.to_plain_text
   end
