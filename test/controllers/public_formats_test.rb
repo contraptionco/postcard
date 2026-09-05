@@ -19,9 +19,13 @@ class PublicFormatsTest < ActionDispatch::IntegrationTest
     @other_post = @other_account.posts.create!(subject: 'Another author', body: 'Other content', published_at: 1.day.ago)
   end
 
+  # Routes are conditional on mode and may be drawn lazily on the first request.
+  # Restore their definitions together with the flags so later editors see the
+  # configured dashboard routes even when this class runs first.
   teardown do
     Rails.configuration.solo_mode = @original_solo_mode
     Rails.configuration.multiuser_mode = @original_multiuser_mode
+    Rails.application.reload_routes!
   end
 
   test 'reader links work on the solo root host' do
@@ -153,11 +157,13 @@ class PublicFormatsTest < ActionDispatch::IntegrationTest
   def use_solo_mode
     Rails.configuration.solo_mode = true
     Rails.configuration.multiuser_mode = false
+    Rails.application.reload_routes!
   end
 
   def use_multiuser_mode
     Rails.configuration.solo_mode = false
     Rails.configuration.multiuser_mode = true
+    Rails.application.reload_routes!
   end
 
   def assert_reader_formats(origin)
