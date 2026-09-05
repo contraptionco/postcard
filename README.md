@@ -37,6 +37,21 @@ After installing dependencies:
 
 - (We cannot use straight localhost because of [hCaptcha constraints](https://docs.hcaptcha.com/#local-development))
 
+### Testing
+
+Run the Rails suite in both application modes and the Chrome editor regressions:
+
+```sh
+bundle install
+npm ci
+RAILS_ENV=test bin/rails db:prepare
+APP_MODE=SOLO COVERAGE=1 bin/test
+APP_MODE=MULTIUSER COVERAGE=1 bin/test
+npm test
+```
+
+Use a dedicated test database; if `DATABASE_URL` is set, it overrides the database in `config/database.yml`. See [the testing guide](docs/testing.md) for focused commands, coverage reports, and conventions for adding regression tests.
+
 ### Environment variables
 
 For basic solo mode development, Postcard works out of the box with minimal configuration. You can optionally create a `.env` file for any customizations.
