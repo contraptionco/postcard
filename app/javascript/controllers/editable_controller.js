@@ -8,24 +8,25 @@ export default class extends Controller {
 
   static targets = ["content", "input"];
 
+  preventNewline = (event) => {
+    if (event.key === "Enter" || event.which === 13) {
+      event.preventDefault();
+    }
+  };
+
   connect() {
-    this.contentTarget.innerHTML = this.inputTarget.value;
+    this.contentElement = this.contentTarget;
+    this.contentTarget.textContent = this.inputTarget.value;
     if (this.hasAutofocusValue) {
       this.autofocus(this.contentTarget);
     }
-    this.contentTarget.addEventListener("keypress", (e) => {
-      if (e.which === 13) {
-        e.preventDefault();
-      }
-    });
+    this.contentTarget.addEventListener("keypress", this.preventNewline);
   }
 
   disconnect() {
-    this.contentTarget.removeEventListener("keypress", (e) => {
-      if (e.which === 13) {
-        e.preventDefault();
-      }
-    });
+    this.debouncedSave.cancel();
+    this.contentElement?.removeEventListener("keypress", this.preventNewline);
+    this.contentElement = null;
   }
 
   debouncedSave = debounce((e) => {

@@ -43,7 +43,10 @@ class DraftController < ApplicationController
       options[:status] = :bad_request unless @post.valid?
     when :review
       @post.published_at = Time.zone.now
-      @post.save!
+      unless @post.save
+        return redirect_to page_post_draft_path(@account, @post, :write),
+                           status: :see_other, alert: @post.errors.full_messages.to_sentence
+      end
       @post.send_newsletter
       @post.account.update(pinned_post: @post)
       return redirect_to page_posts_path(@account, share_post: @post.slug), status: :see_other, notice: 'Post published'
@@ -61,6 +64,6 @@ class DraftController < ApplicationController
   def set_post
     @post = @account.posts.friendly.find(params[:post_slug])
 
-    redirect_to page_post_draft_path(@account, @post, :draft) unless @post.draft?
+    redirect_to edit_page_post_path(@account, @post) unless @post.draft?
   end
 end

@@ -8,6 +8,8 @@ class SubscribersImportJob < ApplicationJob
   private
 
   def import(subscribers_import)
+    return unless subscribers_import.reload.approved?
+
     subscribers_import.emails.each do |email|
       account = subscribers_import.account
       email_address = EmailAddress.find_or_create_by(email: email)
