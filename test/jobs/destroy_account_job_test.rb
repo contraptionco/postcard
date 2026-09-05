@@ -75,4 +75,23 @@ class DestroyAccountJobTest < ActiveSupport::TestCase
     [unrelated, shared, running, current_job].each { |job| assert SolidQueue::Job.exists?(job.id) }
   end
 
+  test 'cancels pending feedback mail and current and legacy signup jobs' do
+    feedback = @account.feedbacks.create!(path: '/support', message: 'Private feedback')
+    feedback_job = SolidQueue::Job.enqueue(ActionMailer::MailDeliveryJob.new(
+      'AdminMailer', 'new_feedback', 'deliver_now', args: [feedback]
+    ), scheduled_at: 1.day.from_now)
+    signup_job = SolidQueue::Job.enqueue(SubscribeToContraptionGhostJob.new(@account), scheduled_at: 1.day.from_now)
+    legacy_signup = SolidQueue::Job.enqueue(SubscribeToContraptionGhostJob.new(@account.email, @account.name), scheduled_at: 1.day.from_now)
+    other_account = accounts(:grandfathered_user)
+    other_signup = SolidQueue::Job.enqueue(SubscribeToContraptionGhostJob.new(other_account.email, other_account.name), scheduled_at: 1.day.from_now)
+    confirmation = SolidQueue::Job.enqueue(SubscribeToContraptionGhostJob.new(@account.email), scheduled_at: 1.day.from_now)
+    unrelated = SolidQueue::Job.enqueue(PostInAdminChatJob.new(@account.email, @account.name), scheduled_at: 1.day.from_now)
+
+    DestroyAccountJob.perform_now(@account)
+
+    [feedback_job, signup_job, legacy_signup].each { |job| refute SolidQueue::Job.exists?(job.id) }
+    [other_signup, confirmation, unrelated].each { |job| assert SolidQueue::Job.exists?(job.id) }
+    refute Feedback.exists?(feedback.id)
+  end
+
 end

@@ -8,10 +8,6 @@
 class DestroyAccountJob < ApplicationJob
   queue_as :default
 
-  # If the job retries after the account row is already gone, there is nothing
-  # left to do.
-  discard_on ActiveJob::DeserializationError
-
   def perform(account)
     account_id = account.id
 
@@ -43,7 +39,8 @@ class DestroyAccountJob < ApplicationJob
   def purge_pending_jobs(account)
     SolidQueue::Job.where(finished_at: nil).where.not(active_job_id: job_id).find_each do |queued_job|
       references = global_ids_in(queued_job.arguments)
-      next if references.empty? || !references.all? { |reference| account_owns_reference?(account, reference) }
+      owned_references = references.any? && references.all? { |reference| account_owns_reference?(account, reference) }
+      next unless owned_references || legacy_signup_job?(account, queued_job)
 
       # Solid Queue locks the execution before deletion and refuses to discard
       # claimed jobs, avoiding a race with workers claiming ready executions.
@@ -52,6 +49,14 @@ class DestroyAccountJob < ApplicationJob
       # A worker may claim or finish a queued job while this sweep runs.
       next
     end
+  end
+
+  # Older signup jobs serialized both email and name rather than an Account.
+  # Match that exact job/signature only; subscriber confirmations have one
+  # argument and unrelated strings are not ownership evidence.
+  def legacy_signup_job?(account, queued_job)
+    queued_job.class_name == 'SubscribeToContraptionGhostJob' &&
+      queued_job.arguments['arguments'] == [account.email, account.name]
   end
 
   def global_ids_in(value)
@@ -73,7 +78,7 @@ class DestroyAccountJob < ApplicationJob
     return gid.model_id == account.id.to_s if gid.model_name == 'Account'
 
     models = { 'Post' => Post, 'Subscription' => Subscription, 'SubscribersImport' => SubscribersImport,
-               'Domain' => Domain, 'EmailMessage' => EmailMessage }
+               'Domain' => Domain, 'EmailMessage' => EmailMessage, 'Feedback' => Feedback }
     model = models[gid.model_name]
     model && model.unscoped.where(account_id: account.id, id: gid.model_id).exists?
   rescue URI::InvalidURIError, ArgumentError

@@ -2,6 +2,12 @@ class SubscribeToContraptionGhostJob < ApplicationJob
   queue_as :default
 
   def perform(email, name = nil)
+    if email.is_a?(Account)
+      return if email.access_locked?
+
+      name = email.name
+      email = email.email
+    end
     return if Rails.env.test?
 
     uri = URI.parse("https://junk-drawer-api.contraption.co/newsletter/subscribe")

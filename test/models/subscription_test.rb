@@ -52,13 +52,19 @@ class SubscriptionTest < ActiveSupport::TestCase
 
   test 'fresh confirmation can reactivate a removed subscription without a duplicate owner notification' do
     assert @subscription.verify!(token: @token)
+    original_verification = @subscription.reload.verified_at
     @subscription.unsubscribe!
-    @subscription.update!(verification_digest: Subscription.digest('fresh'), verification_created_at: Time.current)
 
-    assert_no_enqueued_jobs(only: ActionMailer::MailDeliveryJob) do
-      assert @subscription.verify!(token: 'fresh')
+    travel 1.day do
+      @subscription.update!(verification_digest: Subscription.digest('fresh'), verification_created_at: Time.current)
+
+      assert_no_enqueued_jobs(only: ActionMailer::MailDeliveryJob) do
+        assert @subscription.verify!(token: 'fresh')
+      end
+      assert @subscription.reload.active?
+      assert_operator @subscription.verified_at, :>, original_verification
+      assert_in_delta Time.current, @subscription.verified_at, 1.second
     end
-    assert @subscription.reload.active?
   end
 
   test 'confirmation email explains link expiry and how to request a replacement' do

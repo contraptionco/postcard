@@ -53,7 +53,7 @@ class Subscription < ApplicationRecord
       return false unless valid_verification_token?(token)
 
       already_verified = verified_at.present?
-      self.verified_at ||= Time.current
+      self.verified_at = Time.current unless active?
       self.unsubscribed_at = nil
       save!
 

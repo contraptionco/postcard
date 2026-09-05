@@ -12,7 +12,7 @@ module Accounts
       if resource.persisted?
         # Handle newsletter subscription based on checkbox
         if params[:account][:subscribe_to_newsletter] == '1'
-          SubscribeToContraptionGhostJob.perform_later(resource.email, resource.name)
+          SubscribeToContraptionGhostJob.perform_later(resource)
         end
         
         if resource.active_for_authentication?

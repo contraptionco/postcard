@@ -34,4 +34,23 @@ class WebhookTimeoutsTest < ActiveSupport::TestCase
   ensure
     Rails.configuration.admin_chat_url = previous_url
   end
+
+  test 'signup Ghost jobs read account details and do not send for a locked account' do
+    account = accounts(:new_user)
+    requests = []
+    http = Object.new
+    http.define_singleton_method(:request) { |request| requests << request; Response.new('200', 'OK') }
+    start = ->(*_args, **_options, &block) { block.call(http) }
+
+    Rails.env.stub(:test?, false) do
+      Net::HTTP.stub(:start, start) do
+        SubscribeToContraptionGhostJob.perform_now(account)
+        account.update!(locked_at: Time.current)
+        SubscribeToContraptionGhostJob.perform_now(account)
+      end
+    end
+
+    assert_equal 1, requests.length
+    assert_equal({ 'email' => account.email, 'name' => account.name, 'source' => 'postcard' }, JSON.parse(requests.first.body))
+  end
 end
