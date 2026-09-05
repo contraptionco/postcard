@@ -71,6 +71,25 @@ class UpdatesAccountDeletionTest < ActiveSupport::TestCase
     assert EmailMessage.exists?(message.id)
   end
 
+  test 'deletion preserves a fresh pending confirmation for a former address' do
+    membership, message = updates_mail(@account.email)
+    membership.unsubscribe!
+    @account.update!(email: 'changed-pending@example.com')
+
+    travel 1.minute do
+      membership.send_verification_email
+      token = membership.verification_token
+
+      DestroyAccountJob.perform_now(@account)
+
+      assert Subscription.exists?(membership.id)
+      assert EmailMessage.exists?(message.id)
+      assert membership.reload.valid_verification_token?(token)
+      assert membership.verify!(token: token)
+      assert membership.reload.active?
+    end
+  end
+
   private
 
   def updates_mail(email)

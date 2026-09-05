@@ -194,7 +194,8 @@ class Account < ApplicationRecord
 
     updates.subscriptions.where(email_address_id: recipient_ids).includes(:email_address).find_each do |subscription|
       cutoff = addresses[subscription.email_address.email]
-      next if cutoff && [subscription.created_at, subscription.verified_at].compact.any? { |time| time > cutoff }
+      reader_activity = [subscription.created_at, subscription.verified_at, subscription.verification_created_at]
+      next if cutoff && reader_activity.compact.any? { |time| time > cutoff }
 
       # These messages belong to the updates author, so deleting this account's
       # own email history does not include them. Remove them before their only
