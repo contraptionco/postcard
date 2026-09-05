@@ -90,9 +90,7 @@ class MarketingPagesController < ApplicationController
 end
 
 def featured_account
-  return Account.where(slug: 'philipithomas').includes(:pinned_post).first unless Rails.env.production?
-
-  Rails.cache.fetch('homepage-featured-account', expires_in: 1.hour) do
-    Account.where(slug: 'philipithomas').includes(:pinned_post).first
-  end
+  # Read the current account and pin on every request. Caching these records can
+  # expose a post after it is hidden, unpublished, archived or no longer pinned.
+  Account.where(slug: 'philipithomas', locked_at: nil).includes(:pinned_post).first
 end
