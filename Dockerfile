@@ -37,7 +37,7 @@ RUN apt-get update -qq && \
 
 FROM base AS build
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential libpq-dev pkg-config && \
+    apt-get install --no-install-recommends -y build-essential libpq-dev pkg-config unzip && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --link Gemfile Gemfile.lock ./
