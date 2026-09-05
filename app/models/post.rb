@@ -26,7 +26,7 @@ class Post < ApplicationRecord
   friendly_id :subject, use: %i[slugged history scoped], scope: :account
 
   before_destroy :remove_pinned_by
-  after_save :remove_pinned_by, if: proc { archived? or visibility_hidden? }
+  after_save :remove_pinned_by, if: proc { archived? || visibility_hidden? || draft? }
 
   enum visibility: { public: 0, unlisted: 1, hidden: 2 }, _prefix: true, _default: :public
 
