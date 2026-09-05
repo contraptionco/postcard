@@ -132,6 +132,7 @@ class SubscribersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'removal requires a new email verification before resubscribing' do
+    modes = [Rails.configuration.solo_mode, Rails.configuration.multiuser_mode]
     subscription = create_subscription('reader@example.com', verification_digest: Subscription.digest('old-link'),
                                                                verification_created_at: Time.current)
 
@@ -147,8 +148,16 @@ class SubscribersControllerTest < ActionDispatch::IntegrationTest
 
     assert subscription.valid_verification_token?(subscription.verification_token)
     refute subscription.active?
-    subscription.verify!
-    assert subscription.active?
+    Rails.configuration.solo_mode = false
+    Rails.configuration.multiuser_mode = true
+    host! @account.postcard_host
+
+    get subscription_verification_path(subscription, token: subscription.verification_token)
+
+    assert_response :redirect
+    assert subscription.reload.active?
+  ensure
+    Rails.configuration.solo_mode, Rails.configuration.multiuser_mode = modes if modes
   end
 
   test 'cannot remove another account subscriber through own account path' do
