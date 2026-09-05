@@ -60,4 +60,12 @@ class SubscriptionTest < ActiveSupport::TestCase
     end
     assert @subscription.reload.active?
   end
+
+  test 'confirmation email explains link expiry and how to request a replacement' do
+    @subscription.verification_token = @token
+    email = AccountMailer.subscription_verification(@subscription)
+    assert_includes email.body.decoded, 'This link expires in 48 hours.'
+    assert_includes email.body.decoded, 'subscribe again to request a new link.'
+  end
+
 end

@@ -10,3 +10,7 @@
 <p>
   To get email updates from <a href="<%= @account.url %>"><%= @account.name %></a>, please click the button below:
 </p>
+<p>
+  This link expires in <%= Subscription::VERIFICATION_TOKEN_LIFETIME.in_hours.to_i %> hours.
+  If it expires, subscribe again to request a new link.
+</p>
