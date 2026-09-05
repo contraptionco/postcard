@@ -55,4 +55,18 @@ class UnsubscriptionControllerTest < ActionDispatch::IntegrationTest
     assert_response :see_other
     assert @message.reload.triggered_unsubscribe?
   end
+
+  test 'an old newsletter unsubscribe link remains usable after tracking cleanup' do
+    @message.update!(sent_at: 1.year.ago)
+
+    CleanupTrackingDataJob.perform_now
+
+    get unsubscription_path(@message.unsubscribe_token)
+    assert_response :success
+    assert_select 'a', text: 'Unsubscribe'
+    delete unsubscription_path(@message.unsubscribe_token)
+    assert_response :see_other
+    assert @subscription.reload.unsubscribed_at
+    assert @message.reload.triggered_unsubscribe?
+  end
 end

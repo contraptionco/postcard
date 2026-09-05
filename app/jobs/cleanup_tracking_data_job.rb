@@ -17,16 +17,19 @@ class CleanupTrackingDataJob < ApplicationJob
       ]
     },
     { name: 'Ahoy::Click', columns: %i[updated_at created_at] },
-    { name: 'EmailMessage', columns: %i[sent_at], batch: true },
-    { name: 'SolidCache::Entry', columns: %i[updated_at created_at], batch: true },
-    { name: 'SolidQueue::Job', columns: %i[updated_at finished_at created_at scheduled_at], batch: true },
-    { name: 'SolidQueue::Process', columns: %i[last_heartbeat_at created_at] },
-    { name: 'SolidQueue::Semaphore', columns: %i[expires_at updated_at created_at] }
+    { name: 'SolidCache::Entry', columns: %i[updated_at created_at], batch: true }
   ].freeze
 
   def perform(retention_period: RETENTION_PERIOD)
     cutoff = retention_period.ago
     results = TARGETS.index_with { |target| cleanup_target(target, cutoff) }
+
+    # Only finished queue history is disposable. Let Solid Queue manage worker
+    # and semaphore lifecycles; old pending/failed/claimed work must survive.
+    SolidQueue::Job.clear_finished_in_batches(batch_size: DEFAULT_BATCH_SIZE, finished_before: cutoff)
+
+    # EmailMessage contains functional unsubscribe tokens, not just tracking
+    # data. Its records are removed when the owning account/post is deleted.
     log_results(results, cutoff)
   end
 
