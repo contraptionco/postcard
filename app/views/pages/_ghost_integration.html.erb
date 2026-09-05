@@ -1,0 +1,18 @@
+<section class="mt-12">
+  <h2 class="dashboard-title">Administrator integration</h2>
+  <p class="form-description my-4">
+    Send newly verified subscribers from your page to the Contraption newsletter.
+    This uses this server's fixed Contraption Ghost destination. Enable it only
+    for your own Contraption newsletter; it does not connect another Ghost site
+    or transfer existing subscribers.
+  </p>
+  <%= form_with model: account, url: page_ghost_integration_path(account), method: :patch do |form| %>
+    <div class="form-space">
+      <label class="form-label">
+        <%= form.check_box :sync_to_ghost %>
+        Sync my newly verified subscribers to Contraption
+      </label>
+      <%= form.submit 'Save integration', class: 'primary-button' %>
+    </div>
+  <% end %>
+</section>

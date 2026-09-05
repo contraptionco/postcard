@@ -54,6 +54,7 @@ Rails.application.routes.draw do
 
   resources :pages, param: :slug, :constraints => { :host => Rails.configuration.base_host } do
     resources :setup
+    resource :ghost_integration, only: :update
     get 'subscribers/export', to: 'subscribers#export'
     resources :subscribers_imports, path: 'subscribers/import'
     resources :subscribers

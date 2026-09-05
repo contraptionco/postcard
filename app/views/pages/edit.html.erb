@@ -2,5 +2,8 @@
   <h1 class="dashboard-title">Edit your page</h1>
   <div class="my-6 mb-12">
     <%= render 'form', account: @account %>
+    <% if current_account.admin? && @account == current_account %>
+      <%= render 'ghost_integration', account: @account %>
+    <% end %>
   </div>
 </div>
