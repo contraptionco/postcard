@@ -57,15 +57,6 @@
       <%= f.password_field :password, autocomplete: "new-password", class: 'form-input', required: true %>
     </div>
 
-    <div class="field">
-      <div class="flex items-center">
-        <%= f.check_box :subscribe_to_newsletter, { checked: true, class: "h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded" } %>
-        <%= f.label :subscribe_to_newsletter, class: "ml-2 block text-sm text-gray-900" do %>
-          Subscribe to updates from <a href="https://contraption.co" target="_blank" rel="noopener" class="font-medium text-accent hover:underline">Contraption Co.</a>
-        <% end %>
-      </div>
-    </div>
-
     <div class="actions">
       <%#= render :partial => "shared/primary_button_loading", locals: { label: 'Next: Design your page', arrow: true, classes: 'w-full'} %>
       <%= invisible_recaptcha_tags text: 'Sign up →', class: "btn btn-primary w-full" %>
