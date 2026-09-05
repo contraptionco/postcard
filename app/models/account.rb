@@ -206,10 +206,9 @@ class Account < ApplicationRecord
       return
     end
 
-    circle_mask = Vips::Image.svgload_buffer('<svg viewBox="0 0 800 800"><circle cx="400" cy="400" r="400"/></svg>')
     blob = Vips::Image.new_from_buffer(photo.download, '')
                       .thumbnail_image(800, height: 800, crop: :attention)
-                      .composite(circle_mask, :dest_in)
+                      .composite(icon_circle_mask, :dest_in)
                       .write_to_buffer('.png')
     icon.attach(io: StringIO.new(blob), filename: 'icon.png', content_type: 'image/png')
   end
@@ -320,6 +319,14 @@ class Account < ApplicationRecord
     return if pinnable_post?(pinned_post)
 
     errors.add(:pinned_post, 'must be one of your published, visible posts')
+  end
+
+  def icon_circle_mask
+    # Supersample the circle for smooth edges without using the blocked SVG loader.
+    Vips::Image.black(1600, 1600, bands: 4)
+               .draw_circle([0, 0, 0, 255], 800, 800, 800, fill: true)
+               .resize(0.5)
+               .copy(interpretation: :srgb)
   end
 
   def email_is_valid
