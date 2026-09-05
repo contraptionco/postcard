@@ -131,6 +131,20 @@ class Account < ApplicationRecord
     payment_processor&.subscribed?
   end
 
+  def requires_payment?
+    return false if Rails.configuration.solo_mode
+    return false if grandfathered?
+    return false if ever_subscribed?
+
+    !payment_processor&.subscribed?
+  end
+
+  def ever_subscribed?
+    Pay::Subscription.joins(:customer)
+      .where(pay_customers: { owner_type: 'Account', owner_id: id })
+      .exists?
+  end
+
   def unverified_domain?
     domains.each do |domain|
       return true unless domain.verified?
@@ -212,6 +226,7 @@ class Account < ApplicationRecord
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
       payment_method_collection: 'if_required',
+      subscription_data: { trial_period_days: 30 },
       customer_update: {
         address: 'auto',
         name: 'auto'

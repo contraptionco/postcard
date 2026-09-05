@@ -2,6 +2,7 @@
 
 class PostsController < ApplicationController
   prepend_before_action :authenticate_account!
+  include PaymentRequired
   before_action :set_account_from_path
   before_action :set_post, only: %i[destroy edit update]
 

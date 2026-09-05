@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_06_10_215212) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_12_034422) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -42,6 +42,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_06_10_215212) do
     t.bigint "ahoy_signup_visit_id"
     t.bigint "pinned_post_id"
     t.datetime "locked_at"
+    t.boolean "grandfathered", default: false, null: false
     t.index ["confirmation_token"], name: "index_accounts_on_confirmation_token", unique: true
     t.index ["email"], name: "index_accounts_on_email", unique: true
     t.index ["pinned_post_id"], name: "index_accounts_on_pinned_post_id"

@@ -4,6 +4,7 @@ require 'csv'
 
 class SubscribersController < ApplicationController
   prepend_before_action :authenticate_account!
+  include PaymentRequired
   before_action :set_account_from_path
   layout 'dashboard_container'
 
