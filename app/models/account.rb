@@ -252,9 +252,6 @@ class Account < ApplicationRecord
       a.name = auth.info.name
     end
 
-    unless exists
-      SubscribeToContraptionGhostJob.perform_later(account.email, account.name)
-    end
     if account.admin?
       Rails.logger.error "Admin account #{account.email} cannot use oauth to log in"
       raise 'Admins cannot use OAuth'
