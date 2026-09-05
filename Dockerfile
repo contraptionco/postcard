@@ -3,7 +3,8 @@
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
 ARG RUBY_VERSION=3.2.2
 
-FROM --platform=linux/amd64 ruby:$RUBY_VERSION-slim AS base
+# Bookworm provides libvips >= 8.13, required by the Active Storage security patch.
+FROM --platform=linux/amd64 ruby:$RUBY_VERSION-slim-bookworm AS base
 
 # Rails app lives here
 WORKDIR /rails
