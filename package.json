@@ -26,5 +26,8 @@
   "homepage": "https://github.com/contraptionco/postcard#readme",
   "engines": {
     "node": "24.x"
+  },
+  "allowScripts": {
+    "puppeteer@25.10.0": true
   }
 }

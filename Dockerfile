@@ -13,6 +13,7 @@ ENV RAILS_ENV="production" \
     RAILS_SERVE_STATIC_FILES="true" \
     RAILS_LOG_TO_STDOUT="1" \
     GROVER_NO_SANDBOX="true" \
+    PUPPETEER_CHROME_HEADLESS_SHELL_SKIP_DOWNLOAD="true" \
     PUPPETEER_CACHE_DIR="/rails/.cache/puppeteer"
 
 # Node's official binary avoids compiling Node during every image build.

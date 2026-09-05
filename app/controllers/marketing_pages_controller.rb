@@ -34,6 +34,7 @@ class MarketingPagesController < ApplicationController
   ].freeze
 
   def homepage
+    @email_address = EmailAddress.new
     if Rails.configuration.solo_mode
       return redirect_to new_account_registration_path if Account.count.zero?
 
@@ -41,7 +42,6 @@ class MarketingPagesController < ApplicationController
       return render 'public_pages/show'
     end
 
-    @email_address = EmailAddress.new
     redirect_to page_path(current_account.slug) if current_account
   end
 

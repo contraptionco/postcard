@@ -38,6 +38,7 @@ jobs:
       DISABLE_ANONYMOUS_TELEMETRY: 'true'
       AWS_EC2_METADATA_DISABLED: 'true'
       GROVER_NO_SANDBOX: 'true'
+      PUPPETEER_CHROME_HEADLESS_SHELL_SKIP_DOWNLOAD: 'true'
     steps:
       - uses: actions/checkout@v7
       - name: Install native dependencies
@@ -56,7 +57,7 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
       - name: Install browser libraries
-        run: sudo npx puppeteer browsers install chrome --install-deps
+        run: sudo env "PUPPETEER_CACHE_DIR=$HOME/.cache/puppeteer" npx puppeteer browsers install chrome --install-deps
       - name: Prepare database and assets
         run: |
           bundle exec rails db:create db:migrate
