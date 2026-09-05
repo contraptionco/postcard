@@ -47,14 +47,35 @@ class GhostSubscriptionVerificationTest < ActionDispatch::IntegrationTest
     refute @subscription.reload.active?
   end
 
-  test 'old verification links cannot resubscribe or send a removed reader to Ghost' do
+  test 'email unsubscribe route revokes old verification links without reactivating or sharing the reader' do
     @account.update!(sync_to_ghost: true)
     verify_link
-    @subscription.reload.unsubscribe!
+    original_verified_at = @subscription.reload.verified_at
+    message = EmailMessage.create!(account: @account, subscription: @subscription,
+                                   to: @subscription.email_address.email)
+    unsubscribe_path = unsubscription_path(message.unsubscribe_token)
+
+    get unsubscribe_path
+    assert_response :success
+    assert_select 'a[href=?][data-turbo-method="delete"]', unsubscribe_path
+
     assert_no_enqueued_jobs do
-      verify_link(successful: false)
+      delete unsubscribe_path
+      assert_response :see_other
+      assert_redirected_to '/'
+      assert_equal 'You have unsubscribed!', flash[:notice]
+
+      travel 1.hour do
+        verify_link(successful: false)
+      end
     end
+
+    assert message.reload.triggered_unsubscribe?
     assert @subscription.reload.unsubscribed_at
+    refute @subscription.active?
+    assert_nil @subscription.verification_digest
+    assert_nil @subscription.verification_created_at
+    assert_equal original_verified_at, @subscription.verified_at
   end
 
   test 'changing the account slug preserves the opt-in and its destination' do

@@ -9,7 +9,7 @@ class UnsubscriptionController < ApplicationController
     raise 'cannot find subscription for unsubscription' if @email_message.subscription.blank?
 
     @email_message.update(triggered_unsubscribe: true)
-    @email_message.subscription.update(unsubscribed_at: Time.zone.now)
+    @email_message.subscription.unsubscribe!
 
     redirect_to '/', notice: 'You have unsubscribed!', status: :see_other
   end
