@@ -6,16 +6,15 @@ class SubscriptionVerificationsController < ApplicationController
   def show
     @subscription = @account.subscriptions.find(params[:id])
 
-    unless @subscription.valid_verification_token?(params[:token])
+    unless @subscription.verify!(token: params[:token])
       return redirect_to '/', alert: 'Link expired - please sign up again'
     end
 
-    if @account.slug == 'philipithomas'
+    if @account.slug == 'philipithomas' && @subscription.saved_change_to_verified_at?
       # SubscribeContraptionCoNewsletterJob.perform_later(@subscription.email_address.email)
       SubscribeToContraptionGhostJob.perform_later(@subscription.email_address.email)
     end
 
-    @subscription.verify!
     redirect_to '/', notice: 'Email verified!'
   end
 end

@@ -24,7 +24,7 @@ class Domain < ApplicationRecord
       return Domain.register_development_domains(account, host)
     end
 
-    response = Domain.render_service_request('', Net::HTTP::Post, "{\"name\":\"#{host}\"}")
+    response = Domain.render_service_request('', Net::HTTP::Post, { name: host }.to_json)
 
     unless response.code == '201'
       raise "Error creating domain #{host} in Render - code #{response.code} \"#{response.body}\""
@@ -41,7 +41,7 @@ class Domain < ApplicationRecord
     end
   end
 
-  LOCALHOST_DOMAINS = ['lvh.me', 'fuf.me', 'fbi.com'].freeze
+  LOCALHOST_DOMAINS = ['lvh.me', 'fuf.me'].freeze
   def self.localhost_domain?(domain)
     LOCALHOST_DOMAINS.each do |haystack|
       return true if (domain == haystack) || domain.ends_with?(".#{haystack}")
@@ -108,6 +108,9 @@ class Domain < ApplicationRecord
     url = URI("https://api.render.com/v1/services/#{Rails.configuration.render[:service]}/custom-domains#{path}")
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true
+    http.open_timeout = 5
+    http.read_timeout = 10
+    http.write_timeout = 10
     request = method.new(url)
     request['Accept'] = 'application/json'
     request['Content-Type'] = 'application/json' if body.present?
@@ -149,6 +152,9 @@ class Domain < ApplicationRecord
     url = URI("https://#{domain}/.postcard")
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true
+    http.open_timeout = 5
+    http.read_timeout = 10
+    http.write_timeout = 10
     request = Net::HTTP::Get.new(url)
     http.request(request)
   end

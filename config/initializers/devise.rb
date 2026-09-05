@@ -275,7 +275,7 @@ Devise.setup do |config|
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
   if Rails.configuration.google_oauth[:client_id].present? && Rails.configuration.google_oauth[:client_secret].present?
     config.omniauth :google_oauth2, Rails.configuration.google_oauth[:client_id],
-                    Rails.configuration.google_oauth[:client_secret], provider_ignores_state: true
+                    Rails.configuration.google_oauth[:client_secret]
   end
   # ==> Warden configuration
   # If you want to use other strategies, that are not supported by Devise, or

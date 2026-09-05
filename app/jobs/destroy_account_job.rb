@@ -15,10 +15,14 @@ class DestroyAccountJob < ApplicationJob
   def perform(account)
     account_id = account.id
 
+    purge_pending_jobs(account)
     purge_analytics(account)
 
     # Bulk-delete the large tables without per-row callbacks or audits.
-    account.messages.in_batches.delete_all
+    EmailMessage.where(account_id: account_id)
+                .or(EmailMessage.where(user: account))
+                .or(EmailMessage.where(subscription_id: account.subscriptions.select(:id)))
+                .in_batches.delete_all
     account.subscriptions.in_batches.delete_all
 
     # Pay does not clean up its records when the owner is destroyed. Billing
@@ -27,12 +31,55 @@ class DestroyAccountJob < ApplicationJob
 
     # Destroys the remainder (posts, domains, imports, feedbacks, attachments)
     # with normal callbacks.
+    # The Account association only includes unarchived posts by default.
+    Post.unscoped.where(account_id: account_id).find_each(&:destroy!)
     account.destroy!
 
     purge_audits(account_id)
   end
 
   private
+
+  def purge_pending_jobs(account)
+    SolidQueue::Job.where(finished_at: nil).where.not(active_job_id: job_id).find_each do |queued_job|
+      references = global_ids_in(queued_job.arguments)
+      next if references.empty? || !references.all? { |reference| account_owns_reference?(account, reference) }
+
+      queued_job.with_lock do
+        # A running worker must retain its execution record, including this job.
+        queued_job.destroy! unless queued_job.claimed_execution.present? || queued_job.finished?
+      end
+    rescue ActiveRecord::RecordNotFound
+      # A worker may finish/remove a queued job while this sweep runs.
+      next
+    end
+  end
+
+  def global_ids_in(value)
+    case value
+    when Hash
+      return [value['_aj_globalid']] if value.key?('_aj_globalid')
+
+      value.values.flat_map { |nested| global_ids_in(nested) }
+    when Array
+      value.flat_map { |nested| global_ids_in(nested) }
+    else
+      []
+    end
+  end
+
+  def account_owns_reference?(account, reference)
+    gid = GlobalID.parse(reference)
+    return false unless gid && gid.app == GlobalID.app
+    return gid.model_id == account.id.to_s if gid.model_name == 'Account'
+
+    models = { 'Post' => Post, 'Subscription' => Subscription, 'SubscribersImport' => SubscribersImport,
+               'Domain' => Domain, 'EmailMessage' => EmailMessage }
+    model = models[gid.model_name]
+    model && model.unscoped.where(account_id: account.id, id: gid.model_id).exists?
+  rescue URI::InvalidURIError, ArgumentError
+    false
+  end
 
   def purge_analytics(account)
     # Page views recorded for visitors to the account's page. Uses the GIN

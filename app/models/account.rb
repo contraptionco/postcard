@@ -117,6 +117,8 @@ class Account < ApplicationRecord
   end
 
   def accent_color_rgb
+    return if accent_color.blank?
+
     rgb = accent_color.match(/^#(..)(..)(..)$/).captures.map(&:hex)
     "rgb(#{rgb.join(', ')})"
   end

@@ -34,4 +34,45 @@ class DestroyAccountJobTest < ActiveSupport::TestCase
     assert_equal 0, Audited::Audit.where(auditable_type: 'Account', auditable_id: @account.id).count
     assert EmailAddress.exists?(email_address.id), 'shared email addresses should not be deleted'
   end
+
+  test 'deletes recipient email history and archived posts while preserving shared recipient data' do
+    recipient = EmailAddress.create!(email: 'shared-recipient@example.com')
+    subscription = @account.subscriptions.create!(email_address: recipient, source: :signup)
+    message = EmailMessage.create!(account: @account, user: recipient, subscription: subscription,
+                                    to: recipient.email, subject: 'Private deleted-account history')
+    other_account = accounts(:grandfathered_user)
+    other_message = EmailMessage.create!(account: other_account, user: recipient, to: recipient.email)
+    archived_post = @account.posts.create!(subject: 'Archived post', body: 'Archived content', archived: true)
+
+    DestroyAccountJob.perform_now(@account)
+
+    refute EmailMessage.exists?(message.id)
+    refute Post.unscoped.exists?(archived_post.id)
+    assert EmailMessage.exists?(other_message.id)
+    assert EmailAddress.exists?(recipient.id)
+    assert Account.exists?(other_account.id)
+  end
+
+  test 'cancels pending account jobs but preserves unrelated shared and running jobs' do
+    post = @account.posts.create!(subject: 'Scheduled post', body: 'Post body')
+    other_account = accounts(:grandfathered_user)
+    pending = SolidQueue::Job.enqueue(AnalyticsSummaryEmailJob.new(@account), scheduled_at: 1.day.from_now)
+    post_job = SolidQueue::Job.enqueue(PublishPostJob.new(post), scheduled_at: 1.day.from_now)
+    unrelated = SolidQueue::Job.enqueue(AnalyticsSummaryEmailJob.new(other_account), scheduled_at: 1.day.from_now)
+    shared = SolidQueue::Job.enqueue(AnalyticsSummaryEmailJob.new(@account, other_account), scheduled_at: 1.day.from_now)
+    running = SolidQueue::Job.enqueue(AnalyticsSummaryEmailJob.new(@account))
+    running.ready_execution.destroy!
+    process = SolidQueue::Process.create!(kind: "Worker", last_heartbeat_at: Time.current, pid: 123, hostname: "test")
+    running.create_claimed_execution!(process: process)
+    destroyer = DestroyAccountJob.new(@account)
+    current_job = SolidQueue::Job.enqueue(destroyer)
+
+    destroyer.perform_now
+
+    refute SolidQueue::Job.exists?(pending.id)
+    refute SolidQueue::ScheduledExecution.exists?(job_id: pending.id)
+    refute SolidQueue::Job.exists?(post_job.id)
+    [unrelated, shared, running, current_job].each { |job| assert SolidQueue::Job.exists?(job.id) }
+  end
+
 end
