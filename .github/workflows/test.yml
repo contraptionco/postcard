@@ -31,9 +31,10 @@ jobs:
           ruby-version: 3.2.2
           bundler-cache: true
       - name: Install Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v6
         with:
-          node-version: 18.12.1
+          node-version: 24.20.0
+          cache: npm
       - name: Install libvips
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -50,16 +51,32 @@ jobs:
           cp config/database.github.yml config/database.yml
           bundle exec rails db:create
           bundle exec rails db:migrate
-          yarn --frozen-lockfile
+          npm ci
           bundle exec rake assets:precompile
       - name: Check Zeitwerk autoloading
         run: bundle exec rails zeitwerk:check
       - name: Run unit tests (SOLO)
-        run: bundle exec rails test:all
+        env:
+          APP_MODE: SOLO
+          COVERAGE: '1'
+        run: bin/test
       - name: Run unit tests (MULTIUSER)
         env:
           APP_MODE: MULTIUSER
-        run: bundle exec rails test:all
+          COVERAGE: '1'
+        run: bin/test
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rails-coverage
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Run browser editor regressions
+        env:
+          GROVER_NO_SANDBOX: 'true'
+        run: npm test
       - name: Run brakeman
         run: bundle exec brakeman
 
