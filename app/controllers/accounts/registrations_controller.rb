@@ -10,11 +10,6 @@ module Accounts
       resource.save
       yield resource if block_given?
       if resource.persisted?
-        # Handle newsletter subscription based on checkbox
-        if params[:account][:subscribe_to_newsletter] == '1'
-          SubscribeToContraptionGhostJob.perform_later(resource.email, resource.name)
-        end
-        
         if resource.active_for_authentication?
           set_flash_message! :notice, :signed_up
           sign_up(resource_name, resource)

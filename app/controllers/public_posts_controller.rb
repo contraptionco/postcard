@@ -11,7 +11,7 @@ class PublicPostsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to @account.url unless @account.show_posts_page?
+        redirect_to @account.url if @latest_post.nil? || !@account.show_posts_page?
       end
       format.rss { render :layout => false }
       format.md { render plain: posts_index_markdown, content_type: 'text/markdown' }

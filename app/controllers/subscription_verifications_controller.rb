@@ -10,11 +10,6 @@ class SubscriptionVerificationsController < ApplicationController
       return redirect_to '/', alert: 'Link expired - please sign up again'
     end
 
-    if @account.slug == 'philipithomas'
-      # SubscribeContraptionCoNewsletterJob.perform_later(@subscription.email_address.email)
-      SubscribeToContraptionGhostJob.perform_later(@subscription.email_address.email)
-    end
-
     @subscription.verify!
     redirect_to '/', notice: 'Email verified!'
   end

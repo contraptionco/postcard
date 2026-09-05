@@ -44,12 +44,14 @@ Use a dedicated local PostgreSQL test database; Rails tests reset its contents. 
 ```sh
 RAILS_ENV=test bundle exec rails db:prepare
 bundle exec rails zeitwerk:check
-bundle exec rails test:all
-APP_MODE=MULTIUSER bundle exec rails test:all
+APP_MODE=SOLO COVERAGE=1 bin/test
+APP_MODE=MULTIUSER COVERAGE=1 bin/test
 npm test
 bundle exec brakeman
 bundle exec bundler-audit check --update
 ```
+
+See [the testing guide](docs/testing.md) for focused commands, coverage reports, and conventions for adding regression tests.
 
 CI runs the Rails suite separately in SOLO and MULTIUSER modes on PostgreSQL 16. It also builds production assets, checks autoloading, and renders PNGs through both Puppeteer and Grover. The Docker check runs the default production entrypoint against disposable PostgreSQL with dummy service credentials, requests the health endpoint, and verifies Puma's PID file. The browser tests require the browser downloaded by `npm ci`; on Linux, install its system libraries with `sudo npx puppeteer browsers install chrome --install-deps`.
 

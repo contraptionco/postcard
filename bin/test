@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+ENV['RAILS_ENV'] = 'test'
+require_relative '../config/boot'
+# Rails test preparation can boot the application before test_helper is loaded.
+require_relative '../test/coverage' if ENV['COVERAGE'] == '1'
+require 'webmock/minitest'
+WebMock.disable_net_connect!
+
+ARGV.unshift(ARGV.empty? ? 'test:all' : 'test')
+load File.expand_path('rails', __dir__)

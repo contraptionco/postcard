@@ -40,6 +40,6 @@ class SubscribersImportsController < ApplicationController
   end
 
   def enforce_admin
-    current_account&.admin? || raise
+    head :forbidden unless current_account&.admin?
   end
 end

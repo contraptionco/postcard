@@ -65,7 +65,17 @@ jobs:
       - name: Check Zeitwerk autoloading
         run: bundle exec rails zeitwerk:check
       - name: Run all Rails tests
-        run: bundle exec rails test:all
+        env:
+          COVERAGE: '1'
+        run: bin/test
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rails-coverage-${{ matrix.app-mode }}
+          path: coverage/${{ matrix.app-mode }}/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Verify browser image generation
         run: npm test
       - name: Run Brakeman
