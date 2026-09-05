@@ -2,6 +2,7 @@
 
 class PagesController < ApplicationController
   prepend_before_action :authenticate_account!
+  include PaymentRequired
   before_action :set_account
   layout 'dashboard'
 

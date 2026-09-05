@@ -1,0 +1,15 @@
+grandfathered_user:
+  name: Grandfathered User
+  email: grandfathered@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(Account, 'password123') %>
+  slug: grandfathered-user
+  grandfathered: true
+  accent_color: "#2c6153"
+
+new_user:
+  name: New User
+  email: newuser@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(Account, 'password123') %>
+  slug: new-user
+  grandfathered: false
+  accent_color: "#2c6153"

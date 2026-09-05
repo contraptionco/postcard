@@ -39,11 +39,11 @@ gem 'aws-sdk-rails', '~> 5'
 gem 'aws-actionmailer-ses', '~> 1'
 gem 'premailer-rails', '~> 1.11'
 gem 'puma', '~> 6.4'
-gem 'rails', '~> 7.1'
+gem 'rails', '~> 7.2.3', '>= 7.2.3.2'
 gem 'rails_heroicon', '~> 2.1.0'
 gem 'recaptcha'
 gem 'redis', '~> 4.0'
-gem 'ruby-vips', '~> 2.1'
+gem 'ruby-vips', '~> 2.2', '>= 2.2.1'
 gem 'sitemap_generator', '~> 6.3'
 gem 'sprockets-rails'
 gem 'stimulus-rails', '~> 1.2.1'
@@ -58,7 +58,8 @@ gem 'reverse_markdown', '~> 2.1'
 gem 'whois', '~> 5.1'
 gem 'whois-parser', '~> 2.0'
 gem 'wicked', '~> 1.4'
-gem "solid_cache", "~> 0.6.0"
+# Solid Cache 0.7 supports the Active Record 7.2 bulk-insert API.
+gem "solid_cache", "~> 0.7.0"
 gem "solid_queue", "~> 0.3.2"
 gem "mission_control-jobs", "~> 0.2.1"
 gem "health_check", "~> 3.1"

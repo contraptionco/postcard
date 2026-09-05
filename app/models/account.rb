@@ -131,6 +131,20 @@ class Account < ApplicationRecord
     payment_processor&.subscribed?
   end
 
+  def requires_payment?
+    return false if Rails.configuration.solo_mode
+    return false if grandfathered?
+    return false if ever_subscribed?
+
+    !payment_processor&.subscribed?
+  end
+
+  def ever_subscribed?
+    Pay::Subscription.joins(:customer)
+      .where(pay_customers: { owner_type: 'Account', owner_id: id })
+      .exists?
+  end
+
   def unverified_domain?
     domains.each do |domain|
       return true unless domain.verified?
@@ -185,10 +199,9 @@ class Account < ApplicationRecord
       return
     end
 
-    circle_mask = Vips::Image.svgload_buffer('<svg viewBox="0 0 800 800"><circle cx="400" cy="400" r="400"/></svg>')
     blob = Vips::Image.new_from_buffer(photo.download, '')
                       .thumbnail_image(800, height: 800, crop: :attention)
-                      .composite(circle_mask, :dest_in)
+                      .composite(icon_circle_mask, :dest_in)
                       .write_to_buffer('.png')
     icon.attach(io: StringIO.new(blob), filename: 'icon.png', content_type: 'image/png')
   end
@@ -212,6 +225,7 @@ class Account < ApplicationRecord
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
       payment_method_collection: 'if_required',
+      subscription_data: { trial_period_days: 30 },
       customer_update: {
         address: 'auto',
         name: 'auto'
@@ -288,6 +302,14 @@ class Account < ApplicationRecord
   end
 
   private
+
+  def icon_circle_mask
+    # Supersample the circle for smooth edges without using the blocked SVG loader.
+    Vips::Image.black(1600, 1600, bands: 4)
+               .draw_circle([0, 0, 0, 255], 800, 800, 800, fill: true)
+               .resize(0.5)
+               .copy(interpretation: :srgb)
+  end
 
   def email_is_valid
     errors.add(email, "can't receive email") unless Truemail.valid?(email)

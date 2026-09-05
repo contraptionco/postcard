@@ -1,5 +1,17 @@
 # frozen_string_literal: true
 
+# Backport Pay's Rails 7.2 secrets compatibility fix until Pay is upgraded.
+# https://github.com/pay-rails/pay/pull/834
+module Pay
+  module Env
+    private
+
+    def secrets
+      Rails.application.secrets if Rails.application.respond_to?(:secrets)
+    end
+  end
+end
+
 Pay.setup do |config|
   # For use in the receipt/refund/renewal mailers
   config.business_name = 'Contraption Co. LLC'
