@@ -3,8 +3,8 @@
     <div class="text-center dashboard-container">
       <div class="max-w-3xl mx-auto space-y-2 lg:max-w-none">
         <h2 class="homepage-label">Pricing</h2>
-        <p class="text-4xl font-bold leading-8 tracking-tight text-gray-950 sm:text-5xl md:text-6xl">Free page + newsletter</p>
-        <p class="text-xl text-gray-800">Affordable premium plan for hosting on a custom domain.</p>
+        <p class="text-4xl font-bold leading-8 tracking-tight text-gray-950 sm:text-5xl md:text-6xl">One simple plan</p>
+        <p class="text-xl text-gray-800">Everything you need for your personal website and newsletter.</p>
       </div>
     </div>
   </div>
@@ -12,71 +12,48 @@
     <div class="relative">
       <div class="absolute inset-0 h-3/4"></div>
       <div class="relative z-10 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div class="max-w-md mx-auto space-y-4 lg:max-w-5xl lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 ">
+        <div class="max-w-lg mx-auto">
           <div class="flex flex-col overflow-hidden border rounded-lg shadow-lg border-gray-050">
             <div class="px-6 pt-8 bg-white sm:p-10 sm:pb-0">
               <div>
-                <h3 class="badge-secondary" id="tier-basic">
-                  Basic
-                </h3>
+                <h3 class="badge" id="tier-postcard">Postcard</h3>
               </div>
               <div class="flex items-baseline mt-4 text-6xl font-extrabold">
-                Free
+                $4
+                <span class="ml-1 text-2xl font-medium text-gray-500"> per month </span>
               </div>
-              <p class="mt-5 text-lg text-gray-800">Personal homepage + newsletter</p>
+              <p class="mt-5 text-lg text-accent font-semibold">30-day free trial</p>
             </div>
-            <div class="flex flex-col justify-between flex-1 px-6 pt-6 pb-8 space-y-6 bg-white sm:px-10 sm:pt-6">
+            <div class="flex flex-col justify-between flex-1 px-6 pt-6 pb-8 space-y-6 bg-white sm:p-10 sm:pt-6">
               <ul role="list" class="space-y-4">
                 <li class="flex items-start">
                   <div class="flex-shrink-0">
-                    <%= heroicon "check", class: "text-gray-500 h-6 w-6" %>
+                    <%= heroicon "check", class: "h-6 w-6 text-accent" %>
                   </div>
                   <p class="ml-3 text-base text-gray-700">Personalize your homepage</p>
                 </li>
 
-
                 <li class="flex items-start">
                   <div class="flex-shrink-0">
-                    <%= heroicon "check", class: "h-6 w-6 text-gray-500" %>
+                    <%= heroicon "check", class: "h-6 w-6 text-accent" %>
                   </div>
                   <p class="ml-3 text-base text-gray-700">Collect email signups on your page</p>
                 </li>
 
                 <li class="flex items-start">
                   <div class="flex-shrink-0">
-                    <%= heroicon "check", class: "h-6 w-6 text-gray-500" %>
+                    <%= heroicon "check", class: "h-6 w-6 text-accent" %>
                   </div>
                   <p class="ml-3 text-base text-gray-700">Send emails to your subscribers</p>
                 </li>
 
                 <li class="flex items-start">
                   <div class="flex-shrink-0">
-                    <%= heroicon "check", class: "h-6 w-6 text-gray-500" %>
+                    <%= heroicon "check", class: "h-6 w-6 text-accent" %>
                   </div>
                   <p class="ml-3 text-base text-gray-700">Host on postcard.page domain</p>
                 </li>
 
-
-              </ul>
-              <div class="rounded-md shadow">
-                <a href="<%= new_registration_path('account') %>" class="flex items-center justify-center w-full btn btn-primary btn-big" aria-describedby="tier-basic"> Make a free account </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex flex-col overflow-hidden border rounded-lg shadow-lg border-gray-050">
-            <div class="px-6 pt-8 bg-white sm:p-10 sm:pb-0">
-              <div>
-                <h3 class="badge" id="tier-premium">Premium</h3>
-              </div>
-              <div class="flex items-baseline mt-4 text-6xl font-extrabold">
-                $4
-                <span class="ml-1 text-2xl font-medium text-gray-500"> per month </span>
-              </div>
-              <p class="mt-5 text-lg text-gray-800">Connect Postcard on your own domain</p>
-            </div>
-            <div class="flex flex-col justify-between flex-1 px-6 pt-6 pb-8 space-y-6 bg-white sm:p-10 sm:pt-6">
-              <ul role="list" class="space-y-4">
                 <li class="flex items-start">
                   <div class="flex-shrink-0">
                     <%= heroicon "check", class: "h-6 w-6 text-accent" %>
@@ -90,17 +67,9 @@
                   </div>
                   <p class="ml-3 text-base text-gray-700">Add custom code, such as analytics</p>
                 </li>
-
-                <li class="flex items-start">
-                  <div class="flex-shrink-0">
-                    <%= heroicon "check", class: "h-6 w-6 text-accent" %>
-                  </div>
-                  <p class="ml-3 text-base text-gray-700">Integrations + API <span class="text-gray-500">(Coming soon)</span></p>
-                </li>
-
               </ul>
               <div class="rounded-md shadow">
-                <a href="<%= new_registration_path('account') %>" class="flex items-center justify-center w-full btn btn-primary btn-big" aria-describedby="tier-premium">Get started </a>
+                <a href="<%= new_registration_path('account') %>" class="flex items-center justify-center w-full btn btn-primary btn-big" aria-describedby="tier-postcard">Start free trial</a>
               </div>
             </div>
           </div>

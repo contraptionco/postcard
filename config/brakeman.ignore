@@ -60,20 +60,20 @@
     {
       "warning_type": "Redirect",
       "warning_code": 18,
-      "fingerprint": "7091306dd0b02a1c02eaadd5138fef97feb5c99ac385b19973467ed117fc84e9",
+      "fingerprint": "e0630695d24b9edc6f4723712fc38efa47e131e46fd11380309fa39f79e3e6c5",
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/checkout_controller.rb",
       "line": 10,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
-      "code": "redirect_to(Account.friendly.find(params[:page_slug]).checkout_url(page_setup_url(Account.friendly.find(params[:page_slug]), :domain), page_url(Account.friendly.find(params[:page_slug]))), :status => :found, :allow_other_host => true)",
+      "code": "redirect_to(Account.friendly.find(params[:page_slug]).checkout_url(page_url(Account.friendly.find(params[:page_slug])), page_url(Account.friendly.find(params[:page_slug]))), :status => :found, :allow_other_host => true)",
       "render_path": null,
       "location": {
         "type": "method",
         "class": "CheckoutController",
         "method": "show"
       },
-      "user_input": "Account.friendly.find(params[:page_slug]).checkout_url(page_setup_url(Account.friendly.find(params[:page_slug]), :domain), page_url(Account.friendly.find(params[:page_slug])))",
+      "user_input": "Account.friendly.find(params[:page_slug]).checkout_url(page_url(Account.friendly.find(params[:page_slug])), page_url(Account.friendly.find(params[:page_slug])))",
       "confidence": "Weak",
       "cwe_id": [
         601
