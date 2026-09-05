@@ -73,6 +73,8 @@ class MarketingPagesController < ApplicationController
     return if action_name == 'homepage' && (Rails.configuration.solo_mode || current_account)
 
     @featured_account = featured_account
+    return unless action_name == 'homepage'
+
     @primary_showcase_accounts = get_accounts(PRIMARY_SHOWCASED_PAGE_SLUGS)
     @secondary_showcase_accounts = get_accounts(SECONDARY_SHOWCASED_PAGE_SLUGS)
     @tertiary_showcase_accounts = get_accounts(TERTIARY_SHOWCASED_PAGE_SLUGS)

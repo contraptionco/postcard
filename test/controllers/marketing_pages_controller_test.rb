@@ -49,10 +49,17 @@ class MarketingPagesControllerTest < ActionDispatch::IntegrationTest
 
   test 'the Revue landing page can reuse the responsive preview' do
     accounts(:grandfathered_user).update!(slug: 'philipithomas')
-    get '/alternative/revue'
+    loaded_accounts = 0
+    count_accounts = lambda do |event|
+      loaded_accounts += event.payload[:record_count] if event.payload[:class_name] == 'Account'
+    end
+    ActiveSupport::Notifications.subscribed(count_accounts, 'instantiation.active_record') do
+      get '/alternative/revue'
+    end
     assert_response :success
     assert_select '#homepage-title', text: "Revue alternative that doesn't shut down"
     assert_select '[data-testid=homepage-preview]', count: 1
+    assert_equal 1, loaded_accounts, 'Alternative pages only need the featured account, not homepage galleries'
   end
 
   test 'a featured post renders without a profile photo' do
