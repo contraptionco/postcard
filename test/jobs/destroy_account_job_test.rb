@@ -94,4 +94,25 @@ class DestroyAccountJobTest < ActiveSupport::TestCase
     refute Feedback.exists?(feedback.id)
   end
 
+  test 'removes the deleted accounts updates mail without deleting other recipients or shared addresses' do
+    updates = accounts(:grandfathered_user)
+    updates.update_columns(slug: 'updates')
+    recipient = EmailAddress.create!(email: @account.email)
+    membership = updates.subscriptions.create!(email_address: recipient, source: :signup, verified_at: Time.current)
+    message = EmailMessage.create!(account: updates, user: recipient, subscription: membership, to: recipient.email)
+    another_recipient = EmailAddress.create!(email: 'another-updates-reader@example.com')
+    other_membership = updates.subscriptions.create!(email_address: another_recipient, source: :signup, verified_at: Time.current)
+    other_message = EmailMessage.create!(account: updates, user: another_recipient,
+                                         subscription: other_membership, to: another_recipient.email)
+
+    DestroyAccountJob.perform_now(@account)
+
+    refute EmailMessage.exists?(message.id)
+    refute Subscription.exists?(membership.id)
+    assert EmailMessage.exists?(other_message.id)
+    assert Subscription.exists?(other_membership.id)
+    assert EmailAddress.exists?(recipient.id)
+    assert Account.exists?(updates.id)
+  end
+
 end

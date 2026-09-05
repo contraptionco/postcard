@@ -191,6 +191,10 @@ class Account < ApplicationRecord
     subscription = Subscription.find_by(account: updates, email_address: email_address)
     return if subscription.blank?
 
+    # These messages belong to the updates author, so deleting this account's
+    # own email history does not include them. Remove them before their only
+    # account-membership reference disappears.
+    EmailMessage.where(subscription_id: subscription.id).in_batches.delete_all
     subscription.destroy!
     Rails.logger.info "Unsubscribed #{email} from updates"
   end
@@ -253,9 +257,10 @@ class Account < ApplicationRecord
       a.password = Devise.friendly_token[0, 20]
       a.name = auth.info.name
     end
+    return nil unless account.persisted?
 
     unless exists
-      SubscribeToContraptionGhostJob.perform_later(account.email, account.name)
+      SubscribeToContraptionGhostJob.perform_later(account)
     end
     if account.admin?
       Rails.logger.error "Admin account #{account.email} cannot use oauth to log in"
