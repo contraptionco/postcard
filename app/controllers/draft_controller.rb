@@ -29,7 +29,8 @@ class DraftController < ApplicationController
     case step
     when :write
       @post.assign_attributes(post_params)
-      @post.slug = nil # Resets FriendlyID
+      # Keep the draft URL stable while editing; choose a title slug at review.
+      @post.slug = nil if params[:commit] == 'review'
       unless @post.save(context: :draft)
         return render :write, formats: [:html], status: :unprocessable_entity
       end

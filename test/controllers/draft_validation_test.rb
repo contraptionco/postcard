@@ -63,6 +63,51 @@ class DraftValidationTest < ActionDispatch::IntegrationTest
     assert_invalid_save_preserves_input
   end
 
+  test 'autosaves keep the existing draft URL without reserving intermediate title aliases' do
+    original_slug = @draft.slug
+
+    assert_no_difference('FriendlyId::Slug.count') do
+      ['A', 'A new', 'A new letter'].each do |subject|
+        put write_path, params: { post: { subject: subject, body: '<p>Work in progress.</p>' } }, headers: turbo_headers
+
+        assert_response :success
+        assert_equal original_slug, @draft.reload.slug
+      end
+    end
+
+    assert_difference('FriendlyId::Slug.count', 1) do
+      put write_path, params: { post: { subject: 'A final letter', body: '<p>Ready to send.</p>' }, commit: 'review' }
+    end
+
+    @draft.reload
+    assert_response :redirect
+    follow_redirect!
+    follow_redirect! if response.redirect?
+    assert_response :success
+    assert_equal page_post_draft_path(@account, @draft, :review), path
+    assert_equal 'a-final-letter', @draft.slug
+    assert_equal @draft, @account.posts.friendly.find(original_slug)
+  end
+
+  test 'a duplicate 255-character title can be saved and reviewed with a unique slug' do
+    title = 'a' * 255
+    existing = @account.posts.create!(subject: title, body: '<p>Another post.</p>')
+
+    put write_path, params: { post: { subject: title, body: '<p>New post.</p>' }, commit: 'save' }
+    assert_redirected_to page_posts_path(@account)
+    assert_equal title, @draft.reload.subject
+
+    put write_path, params: { post: { subject: title, body: '<p>New post.</p>' }, commit: 'review' }
+    @draft.reload
+    assert_response :redirect
+    follow_redirect!
+    follow_redirect! if response.redirect?
+    assert_response :success
+    assert_equal page_post_draft_path(@account, @draft, :review), path
+    assert_not_equal existing.slug, @draft.slug
+    assert_equal @draft, @account.posts.friendly.find(@draft.slug)
+  end
+
   test 'direct publication refuses a blank subject or body without changing persisted publication state' do
     [{ subject: '', body: '<p>Some body.</p>' }, { subject: 'Some title', body: '' }].each do |attributes|
       @draft.assign_attributes(attributes)
