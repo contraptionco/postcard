@@ -21,9 +21,9 @@ This is the open source repository powering [postcard.page](https://postcard.pag
 
 Postcard requires the following dependencies to be installed on your system:
 
-- **Ruby** (3.2.2) and **Rails** (7.2.3.2 or a newer 7.2 patch release)
+- **Ruby** (3.1) and **Rails** (7)
 - **PostgreSQL**
-- **libvips** (8.13 or newer; image processing library)
+- **Vips** (image processing library)
 - **Node.js** and **npm** (for open graph image generation with Puppeteer)
 
 ### Development quick start
@@ -220,14 +220,6 @@ DEFAULT_EMAIL_REPLY_TO=your-verified-email@yourdomain.com
 Postcard includes a Dockerfile for easy deployment.
 
 It also includes a `render.yaml` for managed hosting on [Render](https://render.com). To host there, just connect this repo to your account and use the "Blueprint" functionality, paste in the AWS and hCaptcha keys, and the entire app will run with no further configuration.
-
-### Upgrading for CVE-2026-66066
-
-Deploy the updated bundle to every web and background worker process. Rails 7.2.3.2 blocks unsafe libvips loaders and savers during boot, including direct libvips calls used to generate profile icons. The Docker image uses Debian Bookworm for a compatible libvips. For native installations, including Render's Ruby runtime, verify `vips --version` reports 8.13 or newer before deploying; patched Rails refuses to boot with an older libvips. The `ruby-vips` gem must be at least 2.2.1.
-
-Untrusted formats such as SVG, BMP, ICO, and PSD are no longer processed by libvips. Do not re-enable blocked loaders to restore support for those formats. Normal JPEG and PNG image processing remains supported.
-
-For existing deployments that accepted untrusted image uploads, follow the [Rails security advisory](https://github.com/rails/rails/security/advisories/GHSA-xr9x-r78c-5hrm): treat secrets readable by the application as potentially exposed and replace `SECRET_KEY_BASE`, the Rails master key and decrypted credentials if used, database credentials, AWS/storage credentials, and third-party tokens. Do not retain old secrets as verification fallbacks. Changing `SECRET_KEY_BASE` invalidates sessions and signed URLs. Deploying the code fix does not replace these secrets or establish whether exploitation occurred.
 
 ## Multi-User Mode
 

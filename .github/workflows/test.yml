@@ -2,8 +2,7 @@ name: Tests
 on: [push, pull_request]
 jobs:
   test:
-    # Ubuntu 24.04 provides libvips >= 8.13 for patched Active Storage.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     services:
       postgres:
         image: postgres:10
