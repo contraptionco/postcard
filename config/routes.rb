@@ -27,8 +27,10 @@ Rails.application.routes.draw do
     mount PgHero::Engine, at: 'db', :constraints => { :host => Rails.configuration.base_host }
   end
 
-  namespace :admin, :constraints => { :host => Rails.configuration.base_host } do
-    get 'accounts/search', to: 'accounts#search', as: :accounts_search
+  if Rails.configuration.multiuser_mode
+    namespace :admin, :constraints => { :host => Rails.configuration.base_host } do
+      get 'accounts/search', to: 'accounts#search', as: :accounts_search
+    end
   end
 
   if Rails.env.development?
@@ -66,8 +68,10 @@ Rails.application.routes.draw do
       resources :draft
     end
     put 'account', to: 'account#update'
+    delete 'account', to: 'account#destroy'
     get 'checkout', to: 'checkout#show', as: :checkout
     get 'billing', to: 'billing#show', as: :billing
+    get 'support', to: 'support#show', as: :support
   end
 
   # Global
@@ -86,6 +90,7 @@ Rails.application.routes.draw do
   resources :public_posts, path: 'posts', param: :slug
   get '/posts/:slug/og/:updated_at', to: 'public_posts#og_image', as: :public_post_og_image
   get 'sitemap.xml', to: 'public_pages#sitemap', format: 'xml', as: :public_page_sitemap
+  get 'llms.txt', to: 'public_pages#llms_txt', as: :llms_txt
 
   #
   # CDN

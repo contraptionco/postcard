@@ -1,3 +1,10 @@
+<!--
+  All posts are available in machine-readable formats.
+  - Posts index in Markdown: <%= public_posts_url(format: :md, host: @account.host) %>
+  - Individual posts in Markdown: Add .md to any post URL
+  - LLMs.txt: <%= "#{@account.url}/llms.txt" %>
+-->
+
 <% content_for :head do %>
   <% if @account.code && @account.active_subscription? %>
     <%= raw @account.code %>

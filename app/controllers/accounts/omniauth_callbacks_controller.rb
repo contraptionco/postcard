@@ -17,7 +17,11 @@ module Accounts
     end
 
     def after_sign_in_path_for(resource_or_scope)
-      stored_location_for(resource_or_scope) || root_path
+      stored = stored_location_for(resource_or_scope)
+      return stored if stored.present?
+      return page_checkout_path(resource_or_scope) if resource_or_scope.is_a?(Account) && resource_or_scope.requires_payment?
+
+      root_path
     end
 
     private

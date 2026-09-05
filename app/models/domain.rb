@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Domain < ApplicationRecord
+  class RenderRateLimitError < StandardError; end
+
   before_save :downcase_domain
   before_destroy :destroy_in_render
   belongs_to :account, touch: true
@@ -69,7 +71,7 @@ class Domain < ApplicationRecord
     )
   end
 
-  def update_verification_status # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity
+  def update_verification_status(trigger_verification: false) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     return if verified
 
     if Rails.env.development? && Domain.localhost_domain?(domain)
@@ -77,7 +79,13 @@ class Domain < ApplicationRecord
       return
     end
 
+    trigger_dns_verification if trigger_verification
+
     response = Domain.render_service_request("/#{domain}", Net::HTTP::Get)
+    if response.code == '429'
+      raise RenderRateLimitError,
+            "Render rate limit reached while reading domain #{domain} - code 429 \"#{response.body}\""
+    end
 
     unless response.code == '200'
       raise "Error reading domain #{domain} in Render - code #{response.code} \"#{response.body}\""
@@ -110,6 +118,17 @@ class Domain < ApplicationRecord
   end
 
   private
+
+  def trigger_dns_verification
+    response = Domain.render_service_request("/#{domain}/verify", Net::HTTP::Post)
+    return if response.code == '202'
+
+    message = "Error triggering verification for domain #{domain} in Render - " \
+              "code #{response.code} \"#{response.body}\""
+    raise RenderRateLimitError, message if response.code == '429'
+
+    raise message
+  end
 
   def downcase_domain
     self.domain = domain.downcase

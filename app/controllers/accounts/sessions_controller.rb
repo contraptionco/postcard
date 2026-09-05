@@ -27,7 +27,11 @@ module Accounts
     # end
 
     def after_sign_in_path_for(account)
-      stored_location_for(account) || root_path
+      stored = stored_location_for(account)
+      return stored if stored.present?
+      return page_checkout_path(account) if account.is_a?(Account) && account.requires_payment?
+
+      root_path
     end
   end
 end

@@ -114,10 +114,6 @@ menuItems = [
                 <%= heroicon "external-link", class: "inline text-gray-600 h-4" %>
               </a>
 
-              <a href="https://updates.postcard.page" class="flex items-center block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="user-menu-item-0" target="_blank">
-                Updates
-              </a>
-
               <% if @account&.active_subscription? && Rails.configuration.multiuser_mode %>
                 <%= link_to "Billing", page_billing_path(@account), class: "flex items-center block px-4 py-2 text-sm text-gray-700" %>
               <% end %>

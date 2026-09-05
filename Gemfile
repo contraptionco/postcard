@@ -54,6 +54,7 @@ gem 'turbo-rails', '1.4.0'
 gem 'twitter', '~> 7.0'
 gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
 gem 'wcag_color_contrast', '~> 0.1.0'
+gem 'reverse_markdown', '~> 2.1'
 gem 'whois', '~> 5.1'
 gem 'whois-parser', '~> 2.0'
 gem 'wicked', '~> 1.4'

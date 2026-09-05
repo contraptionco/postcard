@@ -12,13 +12,14 @@
     <%= render 'shared/form_error_messages', object: f.object %>
 
     <div
+      data-controller="editable"
       <% unless post.published? %>
-        data-controller="editable" data-editable-autofocus-value="true"
+        data-editable-autofocus-value="true"
       <% end %>
       >
       <h1 contenteditable class="form-input-inline page-title"
         data-editable-target="content"
-        data-action="keyup->editable#changed keyup->editable#debouncedSave"
+        data-action="keyup->editable#changed<%= ' keyup->editable#debouncedSave' unless post.published? %>"
         data-placeholder="Title"
         placeholder="Title"
         ><%= post.subject %></h1>

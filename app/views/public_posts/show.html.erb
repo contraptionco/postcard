@@ -1,3 +1,8 @@
+<!--
+  This post is available in Markdown format.
+  Add .md to the URL: <%= public_post_url(@post, format: :md, host: @account.host) %>
+-->
+
 <% content_for :head do %>
   <% if @account.code %>
     <%= raw @account.code %>

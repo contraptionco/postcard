@@ -18,7 +18,9 @@ ENV RAILS_ENV="production" \
 
 
 # Update gems and bundler
-RUN gem update --system --no-document && \
+# Pin RubyGems to 3.5.x because tailwindcss-rails 2.0.25 uses Gem::Platform.match,
+# which was removed in RubyGems 3.6+
+RUN gem update --system 3.5.22 --no-document && \
   gem install -N bundler
 
 

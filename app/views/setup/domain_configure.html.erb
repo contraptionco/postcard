@@ -1,9 +1,5 @@
 <% title 'Configure domain' %>
 
-<%
-calendly_url = "https://calendly.com/philipithomas/30m-call?name=#{CGI.escape(@account.name)}&email=#{CGI.escape(@account.email)}&a1=#{CGI.escape("Help set up my Postcard custom domain for " + @account.host(show_unverified: true))}"
-%>
-
 <% content_for :heading do %>
   Configure your domain
 <% end %>
@@ -18,10 +14,6 @@ calendly_url = "https://calendly.com/philipithomas/30m-call?name=#{CGI.escape(@a
 </div>
 
 <%= render "domain_record_table" %>
-
-<div class="prose">
-  <p>Want help? <a href="<%= calendly_url %>" class="link" target="_blank" rel="noopener">Schedule a setup call</a> 😀</p>
-</div>
 
 <%= link_to 'Finished adding the records →', next_wizard_path, class: 'btn btn-primary w-full', data: (@account.active_subscription? ? nil : {'turbo': false, action: 'click->upgrade#open'}) %>
 

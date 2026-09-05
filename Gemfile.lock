@@ -633,6 +633,7 @@ DEPENDENCIES
   rails_heroicon (~> 2.1.0)
   recaptcha
   redis (~> 4.0)
+  reverse_markdown (~> 2.1)
   rubocop (~> 1.37)
   rubocop-faker (~> 0.2.0)
   rubocop-rails (~> 2.17.2)

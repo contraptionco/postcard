@@ -14,12 +14,18 @@ class PublicPostsController < ApplicationController
         redirect_to @account.url unless @account.show_posts_page?
       end
       format.rss { render :layout => false }
+      format.md { render plain: posts_index_markdown, content_type: 'text/markdown' }
     end
   end
 
   def show
     @email_address = EmailAddress.new
     @page_title = @post.subject
+
+    respond_to do |format|
+      format.html
+      format.md { render plain: post_markdown(@post), content_type: 'text/markdown' }
+    end
   end
 
   def og_image
@@ -54,5 +60,26 @@ class PublicPostsController < ApplicationController
 
     redirect_to public_post_url(@post, domain: @post.account.host, protocol: request.protocol),
                 status: :moved_permanently, allow_other_host: true
+  end
+
+  def post_markdown(post)
+    body_markdown = ReverseMarkdown.convert(post.body.to_s, unknown_tags: :bypass)
+    <<~MD
+      # #{post.subject}
+
+      *Permalink: #{post.url}*
+
+      *Published: #{post.published_at.strftime('%Y-%m-%d')}*
+
+      #{body_markdown}
+    MD
+  end
+
+  def posts_index_markdown
+    lines = ["# #{@account.name} - Posts\n\n"]
+    @posts.each do |post|
+      lines << "- [#{post.subject}](#{post.url}.md) (#{post.published_at.strftime('%Y-%m-%d')})"
+    end
+    lines.join("\n")
   end
 end

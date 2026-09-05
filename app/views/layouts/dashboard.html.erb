@@ -39,22 +39,16 @@ end
 
 secondaryMenuItems = [
   {
-    name: "Updates",
-    newTab: true,
-    to: 'https://updates.postcard.page',
-    show: true
-  },
-  {
     name: "Billing",
     newTab: false,
     to: page_billing_path(@account),
-    show: @account&.active_subscription? && Rails.configuration.multiuser_mode
+    show: @account&.payment_processor&.subscribed? && Rails.configuration.multiuser_mode
   },
   {
     name: "Account Search",
     newTab: false,
-    to: admin_accounts_search_path,
-    show: @account&.admin? && Rails.configuration.multiuser_mode
+    to: (admin_accounts_search_path if Rails.configuration.multiuser_mode),
+    show: current_account&.admin? && Rails.configuration.multiuser_mode
   },
   {
     name: "Queue",
@@ -82,8 +76,8 @@ secondaryMenuItems = [
   },
   {
     name: Rails.configuration.solo_mode ? "Report an issue" : "Contact support",
-    newTab: true,
-    to: Rails.configuration.solo_mode ? 'https://github.com/contraptionco/postcard/issues/new' : 'mailto:postcard@contraption.co',
+    newTab: Rails.configuration.solo_mode,
+    to: Rails.configuration.solo_mode ? 'https://github.com/contraptionco/postcard/issues/new' : page_support_path(@account),
     show: true,
   },
   {

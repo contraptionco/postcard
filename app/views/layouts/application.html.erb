@@ -50,6 +50,12 @@
   <%# RSS %>
   <% if @account.present? && request.host == @account.host %>
   <%= auto_discovery_link_tag :rss, public_posts_url(:format => :rss, host: @account.host) %>
+  <!--
+    Machine-readable formats available:
+    - LLMs.txt: <%= @account.present? ? "#{@account.url}/llms.txt" : "/llms.txt" %>
+    <% if @post.present? %>- Markdown version of this post: <%= public_post_url(@post, format: :md, host: @account.host) %><% else %>- Posts in Markdown: Add .md to any post URL<% end %>
+    - RSS Feed: <%= @account.present? ? public_posts_url(:format => :rss, host: @account.host) : "" %>
+  -->
   <% end %>
 
   <% og_url = @post.present? ? public_post_og_image_url(@post.slug, @post.updated_at.to_i, host: @post.account.host) : (@account.present? ? public_page_og_image_url(@account.updated_at.to_i, host: @account.host) : asset_url("og.jpg")) %>
