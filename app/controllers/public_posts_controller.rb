@@ -29,7 +29,7 @@ class PublicPostsController < ApplicationController
   end
 
   def og_image
-    png = Rails.cache.fetch("post-#{@post.id}-#{@post.updated_at.to_i}-og-img-v0") do
+    png = Rails.cache.fetch("post-#{@post.id}-#{@post.updated_at.to_i}-og-img-v1") do
       generate_og_image
     end
 

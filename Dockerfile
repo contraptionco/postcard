@@ -45,7 +45,9 @@ RUN bundle install && \
     rm -rf /usr/local/bundle/cache /usr/local/bundle/ruby/*/cache
 
 COPY --link package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev && \
+    npx puppeteer browsers install chrome && \
+    npm cache clean --force
 
 COPY --link . .
 RUN SECRET_KEY_BASE=DUMMY RAILS_ENV=build ./bin/rails assets:precompile
@@ -55,6 +57,7 @@ COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /rails /rails
 
 RUN useradd rails --create-home --shell /bin/bash && \
+    mkdir -p /rails/tmp/pids && \
     chown -R rails:rails /rails
 USER rails:rails
 

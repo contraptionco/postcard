@@ -51,13 +51,13 @@ bundle exec brakeman
 bundle exec bundler-audit check --update
 ```
 
-CI runs the Rails suite separately in SOLO and MULTIUSER modes on PostgreSQL 16. It also builds production assets, checks autoloading, renders PNGs through both Puppeteer and Grover, and boots the Docker image. The browser tests require the browser downloaded by `npm ci`; on Linux, install its system libraries with `sudo npx puppeteer browsers install chrome --install-deps`.
+CI runs the Rails suite separately in SOLO and MULTIUSER modes on PostgreSQL 16. It also builds production assets, checks autoloading, and renders PNGs through both Puppeteer and Grover. The Docker check runs the default production entrypoint against disposable PostgreSQL with dummy service credentials, requests the health endpoint, and verifies Puma's PID file. The browser tests require the browser downloaded by `npm ci`; on Linux, install its system libraries with `sudo npx puppeteer browsers install chrome --install-deps`.
 
 Ruby versions in `.ruby-version`, `.tool-versions`, `Gemfile`, and `Dockerfile` must stay aligned. Node uses `.node-version`, `.tool-versions`, and `Dockerfile`. Container and Render builds use the committed npm lockfile. The reviewed Puppeteer install script is approved for its exact version in `package.json`; review and refresh that entry when updating Puppeteer.
 
 ### Payment dependency compatibility
 
-Pay remains on version 5 to keep existing Stripe subscription records compatible. Its newer major versions require explicit schema and data migrations; those must be tested as a separate billing upgrade. The application backports the payment return-link fix for [CVE-2023-30614](https://github.com/pay-rails/pay/security/advisories/GHSA-cqf3-vpx7-rxhw), restricts payment return links to local paths, and enables only the Stripe processor.
+Pay remains on version 5 to keep existing Stripe subscription records compatible. Its newer major versions require explicit schema and data migrations; those must be tested as a [separate billing upgrade](https://github.com/contraptionco/postcard/issues/79). The application backports the payment return-link fix for [CVE-2023-30614](https://github.com/pay-rails/pay/security/advisories/GHSA-cqf3-vpx7-rxhw), restricts payment return links to local paths, and enables only the Stripe processor.
 
 The two documented exceptions in `.bundler-audit.yml` cover that tested backport and the Paddle Billing signature advisory, whose controller was introduced after Pay 5 and is absent from this application. Mounted-route tests cover the return link and unavailable Paddle/Braintree webhooks. Review these exceptions when upgrading Pay; they do not mean the payment dependency is current.
 
