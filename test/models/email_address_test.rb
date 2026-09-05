@@ -29,7 +29,9 @@ class EmailAddressTest < ActiveSupport::TestCase
 
   test 'rejects missing or malformed addresses' do
     [nil, '', 'reader@example', 'reader@@example.com', 'reader@example.12',
-     'reader name@example.com', ' reader@example.com '].each do |email|
+     'reader name@example.com', ' reader@example.com ', 'reader@example..com',
+     'reader@-example.com', 'reader@example-.com', 'reader@.example.com',
+     "reader@#{'a' * 64}.com", "reader@example.#{'a' * 64}"].each do |email|
       address = EmailAddress.new(email: email)
 
       assert_not address.valid?, "Expected #{email.inspect} to be rejected"
@@ -48,7 +50,7 @@ class EmailAddressTest < ActiveSupport::TestCase
 
   test 'imports normalize and filter addresses using the same suffix policy' do
     import = SubscribersImport.new(account: accounts(:new_user), sources_description: 'Reader opt-ins')
-    import.file.attach(io: StringIO.new("email\n Reader+Letters@EXAMPLE.MUSEUM \nreader@example.c\nreader@example.co\nreader@example.co\n"),
+    import.file.attach(io: StringIO.new("email\n Reader+Letters@EXAMPLE.MUSEUM \nreader@example.c\nreader@example..com\nreader@-example.com\nreader@example-.com\nreader@example.co\nreader@example.co\n"),
                        filename: 'readers.csv', content_type: 'text/csv')
     import.save!
 
