@@ -9,11 +9,13 @@ class MarketingPagesControllerTest < ActionDispatch::IntegrationTest
     @modes = [Rails.configuration.solo_mode, Rails.configuration.multiuser_mode]
     Rails.configuration.solo_mode = false
     Rails.configuration.multiuser_mode = true
+    Rails.application.reload_routes!
     host! Rails.configuration.base_host
   end
 
   teardown do
     Rails.configuration.solo_mode, Rails.configuration.multiuser_mode = @modes
+    Rails.application.reload_routes!
   end
 
   test 'a fresh installation explains how Postcard works without a featured account' do
