@@ -4,7 +4,6 @@ class SetupController < ApplicationController
   prepend_before_action :authenticate_account!
   before_action :set_account_from_path
   before_action :redirect_in_solo
-  before_action :redirect_in_solo
 
   include Wicked::Wizard
 
@@ -48,8 +47,11 @@ class SetupController < ApplicationController
   def update # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     case step
     when :domain_hosted
-      @account.update(account_params)
-      @account.save!
+      unless @account.update(account_params)
+        # FriendlyId restores the persisted slug after validation fails.
+        @account.slug = account_params[:slug] if account_params.key?(:slug)
+        return render :domain_hosted, layout: 'whole_page', status: :unprocessable_entity
+      end
       return redirect_to page_setup_path(@account, :denouement)
     when :domain_connect
       if request.params[:domain].present?

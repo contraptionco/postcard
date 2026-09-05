@@ -1,13 +1,13 @@
-<header class="z-20 py-10 bg-white">
+<header class="z-20 py-5 sm:py-8 bg-white">
   <div class="dashboard-container">
     <nav class="relative z-50 flex items-center justify-between w-full bg-white">
       <div class="flex items-center gap-x-4 md:gap-x-6">
         <a href="/" aria-label="Home">
-          <img class="h-7 w-auto inline-block" src="<%= asset_path("logo/wordmark.svg") %>" alt="Postcard" width="122" h="28">
+          <img class="h-7 w-auto inline-block" src="<%= asset_path("logo/wordmark.svg") %>" alt="Postcard" width="122" height="28">
         </a>
         <a
           href="https://github.com/contraptionco/postcard"
-          class="inline-flex items-center"
+          class="hidden sm:inline-flex items-center"
           target="_blank"
           rel="noopener"
         >
@@ -18,10 +18,10 @@
           >
         </a>
       </div>
-      <div class="flex items-center gap-x-4 md:gap-x-6">
+      <div class="flex shrink-0 items-center gap-x-2 sm:gap-x-4 md:gap-x-6">
         <a
           href="<%= new_session_path('account') %>"
-          class="inline-block rounded-lg py-1 px-2 text-sm text-gray-700 hover:bg-gray-050 text-gray-950"
+          class="inline-block rounded-lg py-3 px-2 text-sm text-gray-700 hover:bg-gray-050 text-gray-950"
           >
           Sign in
         </a>

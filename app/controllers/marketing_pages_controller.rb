@@ -34,6 +34,7 @@ class MarketingPagesController < ApplicationController
   ].freeze
 
   def homepage
+    @email_address = EmailAddress.new
     if Rails.configuration.solo_mode
       return redirect_to new_account_registration_path if Account.count.zero?
 
@@ -41,7 +42,6 @@ class MarketingPagesController < ApplicationController
       return render 'public_pages/show'
     end
 
-    @email_address = EmailAddress.new
     redirect_to page_path(current_account.slug) if current_account
   end
 
@@ -70,29 +70,29 @@ class MarketingPagesController < ApplicationController
   private
 
   def set_showcase
+    return if Rails.configuration.solo_mode || current_account
+
     @featured_account = featured_account
-    @primary_showcase_accounts = get_accounts(PRIMARY_SHOWCASED_PAGE_SLUGS, 'showcase-primary-v0')
-    @secondary_showcase_accounts = get_accounts(SECONDARY_SHOWCASED_PAGE_SLUGS, 'showcase-secondary-v0')
-    @tertiary_showcase_accounts = get_accounts(TERTIARY_SHOWCASED_PAGE_SLUGS, 'showcase-tertiary-v0')
+    @primary_showcase_accounts = get_accounts(PRIMARY_SHOWCASED_PAGE_SLUGS)
+    @secondary_showcase_accounts = get_accounts(SECONDARY_SHOWCASED_PAGE_SLUGS)
+    @tertiary_showcase_accounts = get_accounts(TERTIARY_SHOWCASED_PAGE_SLUGS)
   end
 
-  def get_accounts(slugs, cache_key)
+  def get_accounts(slugs)
     count = slugs.count
 
-    return Account.order(created_at: :desc).limit(count).all unless Rails.env.production?
+    return showcase_accounts.order(created_at: :desc).limit(count).to_a unless Rails.env.production?
 
-    Rails.cache.fetch(cache_key, expires_in: 1.hour) do
-      Account.where(slug: slugs.first(count)).to_a.sort_by do |a|
-        slugs.index(a.slug) || 999
-      end
+    showcase_accounts.where(slug: slugs).to_a.sort_by do |account|
+      slugs.index(account.slug)
     end
   end
-end
 
-def featured_account
-  return Account.where(slug: 'philipithomas').includes(:pinned_post).first unless Rails.env.production?
+  def showcase_accounts
+    Account.where(locked_at: nil).with_rich_text_description.includes(:domains, photo_attachment: :blob, cover_attachment: :blob)
+  end
 
-  Rails.cache.fetch('homepage-featured-account', expires_in: 1.hour) do
-    Account.where(slug: 'philipithomas').includes(:pinned_post).first
+  def featured_account
+    showcase_accounts.includes(pinned_post: :rich_text_body).find_by(slug: 'philipithomas')
   end
 end

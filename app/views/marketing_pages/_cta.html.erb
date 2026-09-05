@@ -12,7 +12,7 @@
     </div>
     <ul class="hidden lg:block">
       <% if @featured_account %>
-        <%= render "showcase_card", account: Account.find_by_slug('philipithomas') %>
+        <%= render "showcase_card", account: @featured_account %>
       <% end %>
     </ul>
   </div>

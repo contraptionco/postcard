@@ -20,6 +20,8 @@ simple_mode = defined?(:simple_mode) ? simple_mode : false
       class="object-cover w-full bg-white <%= classes %>"
       src="<%= cdn_proxy_url(picture) %>"
       alt="<%= alt %>"
+      loading="<%= local_assigns.fetch(:loading, 'eager') %>"
+      decoding="async"
       <% unless simple_mode %>
       srcset="
           <% widths.each do |width| %>

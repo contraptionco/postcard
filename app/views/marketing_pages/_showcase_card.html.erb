@@ -1,10 +1,10 @@
-<li class="col-span-1 rounded-lg bg-white shadow overflow-hidden select-none h-full">
+<li class="min-w-0 col-span-1 rounded-lg bg-white shadow overflow-hidden h-full <%= local_assigns[:visibility] %>">
     <%
       params = {:utm_campaign => "showcase", :utm_source => controller.action_name }
     %>
 
-  <a href="<%= "#{account.url}?#{params.to_query}" %>" target="_blank" rel="nooopener" class="flex flex-col h-full">
-    <%= render "public_pages/page/cover", picture: account.cover, alt: "Cover photo for #{account.name}", classes: "h-16", sizes: '(max-width: 1024px) 456px, 362px' %>
+  <a href="<%= "#{account.url}?#{params.to_query}" %>" target="_blank" rel="noopener" class="flex flex-col h-full">
+    <%= render "public_pages/page/cover", picture: account.cover, alt: "Cover photo for #{account.name}", classes: "h-16", sizes: '(max-width: 1024px) 456px, 362px', loading: 'lazy' %>
     <div class="px-8 flex justify-between items-center">
       <div class="-mt-10">
         <div class="flex">
@@ -13,18 +13,18 @@
           <% else %>
             <img class="h-20 w-20 rounded-full ring-4 ring-white"
               src="<%= asset_path('logo/icon.png') %>"
-              />
+              alt="" width="80" height="80" />
           <% end %>
         </div>
       </div>
       <span class="text-accent text-sm hover:underline">View →</span>
     </div>
     <div class="px-8 pb-6 grow flex flex-col">
-      <h1 class="text-xl font-bold text-gray-950 leading-relaxed truncate mt-2"><%= account.name %></h1>
+      <h3 class="text-xl font-bold text-gray-950 leading-relaxed truncate mt-2"><%= account.name %></h3>
       <p class="text-sm text-gray-800 pt-1 line-clamp-2 grow">
         <%= account.description.to_plain_text %>
       </p>
-      <p class="text-xs text-gray-600 pt-2 font-light">
+      <p class="text-xs text-gray-600 pt-2 font-light break-all">
         <%= account.host.reverse.chomp(".www").reverse %>
       </p>
     </div>
