@@ -11,6 +11,15 @@ class PinnedPostTest < ActiveSupport::TestCase
     assert account.errors.added?(:pinned_post, 'must be one of your published, visible posts')
   end
 
+  test 'historical invalid pins do not block unrelated profile and password changes' do
+    account = accounts(:new_user)
+    post = accounts(:grandfathered_user).posts.create!(subject: 'Private draft', body: 'Private content')
+    account.update_column(:pinned_post_id, post.id)
+
+    assert account.reload.update(name: 'Updated name', password: 'new-password123')
+    assert_nil account.public_pinned_post
+  end
+
   test 'public pin excludes historical hidden and unpublished pins' do
     account = accounts(:new_user)
     [{ visibility: :hidden, published_at: Time.current }, { published_at: nil }].each do |attributes|

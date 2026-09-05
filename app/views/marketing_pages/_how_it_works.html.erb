@@ -7,7 +7,7 @@ steps = {
 }
 %>
 
-<% if @featured_account&.pinned_post %>
+<% if (featured_post = @featured_account&.public_pinned_post) %>
 <div class="dashboard-container">
   <div class="grid grid-cols-1 gap-y-16 gap-x-8 sm:gap-y-20 lg:grid-cols-2 lg:items-start">
     <div class="flex flex-col items-stretch w-full h-full lg:items-center lg:flex-row">
@@ -24,7 +24,7 @@ steps = {
                 <div class="">
                   <span class="font-semibold"><a href="<%= @featured_account.url %>" class="text-gray-900"  target="_blank" rel="noopener"><%= @featured_account.name %></a></span>
                   <span class="text-gray-800">·</span>
-                  <span class="font-light text-gray-800"><%= local_time(@featured_account.pinned_post.published_at, '%B %e, %Y') %></span>
+                  <span class="font-light text-gray-800"><%= local_time(featured_post.published_at, '%B %e, %Y') %></span>
                 </div>
                 <div>
                   <%= heroicon "chevron-down", class: "w-4 h-4 text-gray-800 hover:text-accent" %>
@@ -32,15 +32,15 @@ steps = {
               </div>
               <div class="max-w-md">
                 <div class="mb-4">
-                  <p class="mb-4">I just published "<%= @featured_account.pinned_post.subject %>" on my website - check it out:</p>
+                  <p class="mb-4">I just published "<%= featured_post.subject %>" on my website - check it out:</p>
                   <p class="mb-4">
-                    <a href="<%= @featured_account.pinned_post.url %>" class="text-accent hover:underline" target="_blank" rel="noopener">
-                      <%= @featured_account.pinned_post.url.sub('http://', '').sub('https://', '').truncate(36) %>
+                    <a href="<%= featured_post.url %>" class="text-accent hover:underline" target="_blank" rel="noopener">
+                      <%= featured_post.url.sub('http://', '').sub('https://', '').truncate(36) %>
                     </a>
                   </p>
-                  <a href="<%= @featured_account.pinned_post.url %>" target="_blank" rel="noopener">
-                    <img src="<%= public_post_og_image_url(@featured_account.pinned_post.slug, @featured_account.pinned_post.updated_at.to_i, host: @featured_account.host) %>"
-                      alt="<%= @featured_account.pinned_post.subject %>"
+                  <a href="<%= featured_post.url %>" target="_blank" rel="noopener">
+                    <img src="<%= public_post_og_image_url(featured_post.slug, featured_post.updated_at.to_i, host: @featured_account.host) %>"
+                      alt="<%= featured_post.subject %>"
                       class="w-full h-auto border border-gray-200 border-solid rounded-md shadow-sm"
                       styled="max-width: 564px" width="564" height="300">
                   </a>

@@ -98,6 +98,19 @@ class PinnedPostsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match 'Private draft content', response.body
   end
 
+  test 'marketing homepage excludes historical invalid featured pins' do
+    @account.update!(slug: 'philipithomas')
+    post = create_post(@other_account, published_at: nil, subject: 'Confidential draft', body: 'Private draft content')
+    @account.update_column(:pinned_post_id, post.id)
+    sign_out @account
+
+    get '/'
+
+    assert_response :success
+    assert_no_match 'Confidential draft', response.body
+    assert_no_match 'Private draft content', response.body
+  end
+
   private
 
   def create_post(account, **attributes)

@@ -31,7 +31,7 @@ class Account < ApplicationRecord
   validate :email_is_valid, on: :create
   validates :name, presence: true
   validates :accent_color, format: { with: /\A#[0-9a-fA-F]{6}\z/ }, allow_nil: true
-  validate :pinned_post_can_be_featured
+  validate :pinned_post_can_be_featured, if: :will_save_change_to_pinned_post_id?
   VALID_SLUG_REGEX = /\A[a-z0-9]+(-[a-z0-9]+)*\z/
   validates :slug, presence: true, length: { minimum: 2, maximum: 255 },
                    format: { with: VALID_SLUG_REGEX, message: "can only contain letters, numbers and '-'" },
