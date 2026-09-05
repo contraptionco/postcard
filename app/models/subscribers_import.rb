@@ -17,7 +17,7 @@ class SubscribersImport < ApplicationRecord
       CSV.parse(f.read, headers: false).each do |row|
         row.each do |cell|
           cell_cleaned = cell.to_s.strip.downcase
-          emails.push(cell_cleaned) if URI::MailTo::EMAIL_REGEXP.match?(cell_cleaned)
+          emails.push(cell_cleaned) if EmailAddress::VALID_EMAIL_REGEX.match?(cell_cleaned)
         end
       end
       emails.uniq
