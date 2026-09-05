@@ -76,42 +76,12 @@ jobs:
   docker-smoke-test:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: postcard_smoke
-          POSTGRES_PASSWORD: postgres
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v7
       - name: Build Docker image
         run: docker build -t postcard:test .
-      - name: Verify default production startup with disposable services
-        run: |
-          docker run --detach --name postcard-smoke --network host \
-            -e DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postcard_smoke \
-            -e APP_MODE=SOLO -e BASE_HOST=localtest.me \
-            -e SECRET_KEY_BASE=ci-only-secret-key-base \
-            -e AWS_ACCESS_KEY_ID=ci-only -e AWS_SECRET_ACCESS_KEY=ci-only \
-            -e AWS_REGION=us-east-1 -e AWS_STORAGE_BUCKET=postcard-ci \
-            -e AWS_EC2_METADATA_DISABLED=true -e DISABLE_ANONYMOUS_TELEMETRY=true \
-            postcard:test
-          curl --fail --silent --show-error --retry 30 --retry-delay 2 \
-            --retry-connrefused --max-time 10 \
-            -H 'X-Forwarded-Proto: https' http://127.0.0.1:3000/.postcard \
-            | tee /tmp/postcard-smoke-response
-          test "$(cat /tmp/postcard-smoke-response)" = postcard
-          docker exec postcard-smoke test -s /rails/tmp/pids/server.pid
+      - name: Exercise production Docker boot, homepage, and cache
+        timeout-minutes: 10
+        run: bash script/docker-smoke-test postcard:test
       - name: Verify the image includes a working browser
         run: docker run --rm --entrypoint npm postcard:test test
-      - name: Collect production logs and stop the smoke container
-        if: always()
-        run: |
-          docker logs postcard-smoke || true
-          docker rm -f postcard-smoke || true

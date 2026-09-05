@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script creates disposable CI containers. Never run it on a deploy host.
+if [[ "${GITHUB_ACTIONS:-}" != true ]]; then
+  echo "Docker smoke tests must run on a GitHub Actions runner." >&2
+  exit 1
+fi
+
+image="${1:-postcard:test}"
+prefix="postcard-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT:-1}-$$"
+network="$prefix-network"
+database="$prefix-db"
+app="$prefix-app"
+
+cleanup() {
+  status=$?
+  if (( status != 0 )); then
+    docker logs "$app" >&2 || true
+    docker logs "$database" >&2 || true
+  fi
+  docker rm -f -v "$app" "$database" >/dev/null 2>&1 || true
+  docker network rm "$network" >/dev/null 2>&1 || true
+  exit "$status"
+}
+trap cleanup EXIT
+
+# No host ports, host volumes, credentials, or outbound network access.
+docker pull postgres:16
+docker network create --internal "$network" >/dev/null
+docker run -d --name "$database" --network "$network" --network-alias database \
+  -e POSTGRES_PASSWORD=postcard-smoke-only postgres:16 >/dev/null
+for attempt in {1..60}; do
+  if docker exec "$database" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+docker exec "$database" pg_isready -h 127.0.0.1 -U postgres
+
+request() {
+  docker exec "$app" curl --silent --show-error --max-time 10 \
+    --header 'Host: postcard-smoke.test' --header 'X-Forwarded-Proto: https' \
+    --output /tmp/smoke-body --dump-header /tmp/smoke-headers \
+    --write-out '%{http_code}' "http://127.0.0.1:3000$1"
+}
+
+expect_status() {
+  actual=$(request "$1")
+  if [[ "$actual" != "$2" ]]; then
+    echo "$mode $1: expected HTTP $2, got $actual" >&2
+    docker exec "$app" cat /tmp/smoke-body >&2
+    exit 1
+  fi
+}
+
+expect_body() {
+  if ! docker exec "$app" grep -Fq "$1" /tmp/smoke-body; then
+    echo "$mode response did not contain: $1" >&2
+    docker exec "$app" cat /tmp/smoke-body >&2
+    exit 1
+  fi
+}
+
+for mode in MULTIUSER SOLO; do
+  db_name="postcard_smoke_${mode,,}"
+  docker exec "$database" createdb -U postgres "$db_name"
+  docker run -d --name "$app" --network "$network" \
+    -e RAILS_ENV=production -e APP_MODE="$mode" \
+    -e "DATABASE_URL=postgres://postgres:postcard-smoke-only@database/$db_name" \
+    -e BASE_HOST=postcard-smoke.test \
+    -e SECRET_KEY_BASE=postcard-docker-smoke-test-only-secret-key-base \
+    -e AWS_ACCESS_KEY_ID=smoke-only -e AWS_SECRET_ACCESS_KEY=smoke-only \
+    -e AWS_REGION=us-east-1 -e AWS_STORAGE_BUCKET=postcard-smoke-only \
+    -e AWS_EC2_METADATA_DISABLED=true \
+    -e HCAPTCHA_SITE_KEY=smoke-only -e HCAPTCHA_SECRET_KEY=smoke-only \
+    -e DISABLE_ANONYMOUS_TELEMETRY=true \
+    "$image" >/dev/null
+
+  # Wait without warming any controller cache. The entrypoint migrates first.
+  for attempt in {1..60}; do
+    if [[ "$(request /.postcard 2>/dev/null || true)" == 200 ]]; then
+      break
+    fi
+    if [[ "$(docker inspect --format '{{.State.Running}}' "$app")" != true ]]; then
+      echo "$mode container exited during boot." >&2
+      exit 1
+    fi
+    sleep 2
+  done
+  expect_status /.postcard 200
+  docker exec "$app" test -s /rails/tmp/pids/server.pid
+
+  # The homepage populates Solid Cache even when SOLO redirects to signup.
+  for cache_state in cold warm; do
+    if [[ "$mode" == MULTIUSER ]]; then
+      expect_status / 200
+      expect_body 'Personal website + newsletter'
+    else
+      expect_status / 302
+      docker exec "$app" grep -Eiq '^location: https://postcard-smoke[.]test/accounts/sign_up[[:space:]]*$' /tmp/smoke-headers
+      expect_status /accounts/sign_up 200
+      expect_body 'First, create an account'
+    fi
+    echo "$mode homepage passed with $cache_state cache."
+  done
+
+  # A separate process must read values written by Puma from the database.
+  docker exec "$app" bundle exec rails runner '
+    abort "Production must use Solid Cache" unless Rails.cache.is_a?(SolidCache::Store)
+    %w[showcase-primary-v0 showcase-secondary-v0 showcase-tertiary-v0].each do |key|
+      abort "Missing persisted homepage cache: #{key}" unless Rails.cache.read(key) == []
+    end
+    abort "Solid Cache table is empty" unless SolidCache::Entry.exists?
+    puts "Homepage cache persisted successfully."
+  '
+  docker rm -f -v "$app" >/dev/null
+done

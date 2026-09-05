@@ -520,7 +520,7 @@ GEM
       thor (~> 1.0)
       tilt (~> 2.0)
       yard (~> 0.9, >= 0.9.24)
-    solid_cache (0.6.0)
+    solid_cache (0.7.0)
       activejob (>= 7)
       activerecord (>= 7)
       railties (>= 7)
@@ -674,7 +674,7 @@ DEPENDENCIES
   selenium-webdriver
   sitemap_generator (~> 6.3)
   solargraph (~> 0.44.2)
-  solid_cache (~> 0.6.0)
+  solid_cache (~> 0.7.0)
   solid_queue (~> 0.3.2)
   sprockets-rails
   stimulus-rails (~> 1.2.1)
