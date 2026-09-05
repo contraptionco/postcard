@@ -54,25 +54,25 @@ secondaryMenuItems = [
     name: "Queue",
     newTab: true,
     to: "/jobs",
-    show: @account&.admin?
+    show: current_account&.admin?
   },
   {
     name: "Analytics",
     newTab: true,
     to: blazer_path,
-    show: @account&.admin?
+    show: current_account&.admin?
   },
   {
     name: "DB",
     newTab: true,
     to: pg_hero_path,
-    show: @account&.admin?
+    show: current_account&.admin?
   },
   {
     name: "Emails",
     newTab: true,
     to: "/letter_opener",
-    show: @account&.admin? && Rails.env.development?
+    show: current_account&.admin? && Rails.env.development?
   },
   {
     name: Rails.configuration.solo_mode ? "Report an issue" : "Contact support",
