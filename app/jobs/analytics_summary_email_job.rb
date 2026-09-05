@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class AnalyticsSummaryEmailJob < ApplicationJob
+class AnalyticsSummaryEmailJob < RecordBatchJob
   queue_as :low
 
   def perform(*accounts)

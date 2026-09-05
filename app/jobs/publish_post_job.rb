@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PublishPostJob < ApplicationJob
+class PublishPostJob < RecordBatchJob
   queue_as :critical
 
   def perform(*posts) # rubocop:disable Metrics/MethodLength

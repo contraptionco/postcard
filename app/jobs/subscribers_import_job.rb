@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class SubscribersImportJob < ApplicationJob
+class SubscribersImportJob < RecordBatchJob
   def perform(*subscribers_imports)
     subscribers_imports.each.map(&method(:import))
   end
