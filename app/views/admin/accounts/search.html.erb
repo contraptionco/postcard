@@ -1,7 +1,7 @@
 <h1 class="dashboard-title">Account search</h1>
 <p class="mt-2 text-sm text-gray-500">Find an account by its full email address.</p>
 
-<%= form_with url: admin_accounts_search_path, method: :post, class: 'my-6 flex flex-col gap-3 sm:flex-row sm:items-end' do |form| %>
+<%= form_with url: admin_accounts_search_path, method: :post, data: { turbo: false }, class: 'my-6 flex flex-col gap-3 sm:flex-row sm:items-end' do |form| %>
   <div class="flex-grow">
     <%= form.label :account_email, 'Email address', class: 'form-label' %>
     <%= form.email_field :account_email, value: @query, placeholder: 'reader@example.com', class: 'form-input mt-1', autofocus: true %>

@@ -52,7 +52,7 @@ class AdminAccountsControllerTest < ActionDispatch::IntegrationTest
         get admin_accounts_search_path
 
         assert_response :success
-        assert_select 'form[method=post]' do
+        assert_select 'form[method=post][data-turbo=false]' do
           assert_select 'input[name=account_email][type=email]'
         end
 
