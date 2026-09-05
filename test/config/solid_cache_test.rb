@@ -19,7 +19,7 @@ class SolidCacheTest < ActiveSupport::TestCase
   end
 
   teardown do
-    @cache&.delete_multi(CACHE_KEYS)
+    @cache&.delete_multi(CACHE_KEYS.dup)
   end
 
   test 'fetch persists a cache miss and reuses it from another store instance' do
