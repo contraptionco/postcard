@@ -30,6 +30,7 @@ Rails.application.routes.draw do
   if Rails.configuration.multiuser_mode
     namespace :admin, :constraints => { :host => Rails.configuration.base_host } do
       get 'accounts/search', to: 'accounts#search', as: :accounts_search
+      post 'accounts/search', to: 'accounts#search'
     end
   end
 

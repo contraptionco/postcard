@@ -4,11 +4,12 @@ module Admin
   class AccountsController < ApplicationController
     prepend_before_action :authenticate_account!
     before_action :require_admin!
+    skip_after_action :track_action
     layout 'dashboard_container'
 
     def search
       @account = current_account
-      @query = params[:q].is_a?(String) ? params[:q].strip.downcase : ''
+      @query = request.post? && params[:account_email].is_a?(String) ? params[:account_email].strip.downcase : ''
       @found_account = Account.find_by(email: @query) if @query.present?
     end
 
