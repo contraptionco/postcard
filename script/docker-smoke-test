@@ -54,6 +54,14 @@ expect_status() {
   fi
 }
 
+expect_body() {
+  if ! docker exec "$app" grep -Fq "$1" /tmp/smoke-body; then
+    echo "$mode response did not contain: $1" >&2
+    docker exec "$app" cat /tmp/smoke-body >&2
+    exit 1
+  fi
+}
+
 for mode in MULTIUSER SOLO; do
   db_name="postcard_smoke_${mode,,}"
   docker exec "$database" createdb -U postgres "$db_name"
@@ -86,12 +94,12 @@ for mode in MULTIUSER SOLO; do
   for cache_state in cold warm; do
     if [[ "$mode" == MULTIUSER ]]; then
       expect_status / 200
-      docker exec "$app" grep -Fq 'A personal website for everybody' /tmp/smoke-body
+      expect_body 'Personal website + newsletter'
     else
       expect_status / 302
       docker exec "$app" grep -Eiq '^location: https://postcard-smoke[.]test/accounts/sign_up[[:space:]]*$' /tmp/smoke-headers
       expect_status /accounts/sign_up 200
-      docker exec "$app" grep -Fq 'First, create an account' /tmp/smoke-body
+      expect_body 'First, create an account'
     fi
     echo "$mode homepage passed with $cache_state cache."
   done
