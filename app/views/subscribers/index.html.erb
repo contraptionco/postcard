@@ -1,7 +1,7 @@
 <div class="flex items-center justify-between">
   <div class="flex-grow">
     <h1 class="dashboard-title">
-      <%= pluralize(@active_subscriptions.count, 'subscriber') %>
+      <%= pluralize(@total_subscribers, 'subscriber') %>
     </h1>
     <div class="block mt-2 text-sm text-gray-500">
       <%= link_to "Export →", page_subscribers_export_path(@account, format: :csv), class: 'text-gray-500 underline text-sm mt-2 block' %>
@@ -13,14 +13,45 @@
     %>
 </div>
 
+<%= form_with url: page_subscribers_path(@account), method: :get, class: 'mt-6 flex flex-wrap items-end gap-3' do |form| %>
+  <div class="flex-grow">
+    <%= form.label :q, 'Search subscribers', class: 'block text-sm font-medium text-gray-700 mb-1' %>
+    <%= form.search_field :q, value: @query, placeholder: 'Email address', class: 'form-input w-full', autocomplete: 'off' %>
+  </div>
+  <%= form.submit 'Search', class: 'btn btn-secondary' %>
+  <% if @query.present? %>
+    <%= link_to 'Clear', page_subscribers_path(@account), class: 'link py-2' %>
+  <% end %>
+<% end %>
+
 <div class="my-6">
-  <% if @active_subscriptions.count.zero? %>
+  <% if @total_subscribers.zero? %>
     <div class="prose max-w-none">
       <p>
         Nobody has joined your mailing list yet. Try sharing your Postcard page to get some subscribers, or import a list from another service.
       </p>
     </div>
+  <% elsif @matching_subscribers.zero? %>
+    <p class="text-sm text-gray-700">No subscribers match your search.</p>
   <% else %>
+    <% if @query.present? %>
+      <p class="text-sm text-gray-700"><%= pluralize(@matching_subscribers, 'matching subscriber') %></p>
+    <% end %>
     <%= render :partial => "subscribers/table", locals: { subscriptions: @active_subscriptions } %>
+    <% if @total_pages > 1 %>
+      <nav aria-label="Subscriber pages" class="mt-6 flex items-center justify-between gap-4 text-sm">
+        <div>
+          <% if @page > 1 %>
+            <%= link_to '← Previous', page_subscribers_path(@account, q: @query.presence, page: @page - 1), class: 'link', rel: 'prev' %>
+          <% end %>
+        </div>
+        <span>Page <%= @page %> of <%= @total_pages %></span>
+        <div>
+          <% if @page < @total_pages %>
+            <%= link_to 'Next →', page_subscribers_path(@account, q: @query.presence, page: @page + 1), class: 'link', rel: 'next' %>
+          <% end %>
+        </div>
+      </nav>
+    <% end %>
   <% end %>
 </div>
