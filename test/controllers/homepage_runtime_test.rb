@@ -14,6 +14,10 @@ class HomepageRuntimeTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select 'input[name="email_address[email]"]'
+
+    importmap = JSON.parse(css_select('script[type="importmap"]').first.content)
+    trix_path = URI.parse(importmap.fetch('imports').fetch('trix')).path
+    assert_match %r{\A/assets/trix-[a-f0-9]+\.js\z}, trix_path
   ensure
     Rails.configuration.solo_mode = original_solo_mode
     Rails.configuration.multiuser_mode = original_multiuser_mode

@@ -19,4 +19,5 @@ pin 'lodash.debounce' # @4.0.8
 pin 'stimulus-dropdown' # @2.1.0
 pin 'stimulus-use', preload: true # @0.51.3
 pin 'hotkeys-js' # @3.10.1
-pin "trix", to: "https://cdn.jsdelivr.net/npm/trix@2.1.1/dist/trix.esm.js"
+# Use the patched editor tracked by the action_text-trix gem and bundle audit.
+pin 'trix', to: 'trix.js'

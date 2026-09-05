@@ -53,6 +53,8 @@ bundle exec bundler-audit check --update
 
 CI runs the Rails suite separately in SOLO and MULTIUSER modes on PostgreSQL 16. It also builds production assets, checks autoloading, and renders PNGs through both Puppeteer and Grover. The Docker check runs the default production entrypoint against disposable PostgreSQL with dummy service credentials, requests the health endpoint, and verifies Puma's PID file. The browser tests require the browser downloaded by `npm ci`; on Linux, install its system libraries with `sudo npx puppeteer browsers install chrome --install-deps`.
 
+Trix is served from the `action_text-trix` gem so its version is locked and included in the Ruby dependency audit. Browser tests load the actual dashboard editor code and verify normal formatting and malicious pasted-content sanitization. Avoid replacing its importmap entry with a separately pinned CDN version.
+
 Ruby versions in `.ruby-version`, `.tool-versions`, `Gemfile`, and `Dockerfile` must stay aligned. Node uses `.node-version`, `.tool-versions`, and `Dockerfile`. Container and Render builds use the committed npm lockfile. The reviewed Puppeteer install script is approved for its exact version in `package.json`; review and refresh that entry when updating Puppeteer.
 
 ### Payment dependency compatibility
