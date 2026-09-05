@@ -50,6 +50,6 @@ Each invocation replaces its mode's report; focused runs do not combine with old
 
 - Start with the smallest request, job, model, or browser test that fails for the reported behavior. Assert the visible response and persisted state, including rejected requests that must not change records or enqueue work.
 - Use real test mail delivery when email content matters. Inspect the rendered URLs and the actual recipients; a mocked mailer method cannot verify either.
-- Stub external services at their boundary. WebMock blocks unexpected HTTP requests in the Rails suite, including localhost. Add an explicit, narrowly matched stub for each expected request. The mail tests stub the stylesheet fetched by Premailer while keeping real template rendering.
+- Stub external services at their boundary. WebMock blocks unexpected HTTP requests in the Rails suite, including localhost. Add an explicit, narrowly matched stub for each expected request. The shared test setup stubs the default font stylesheet fetched by Premailer while keeping real mail template rendering.
 - Keep tests independent. Restore any changed global configuration, clear job and mail queues, use a fixed clock for time-sensitive behavior, and avoid depending on execution order.
 - Run both boot modes after changing shared behavior. A test that temporarily changes a configuration flag does not replace booting the suite in each mode.

@@ -151,7 +151,7 @@ class PostPublishingFlowTest < ActionDispatch::IntegrationTest
 
   test 'an author can edit a published post without sending another newsletter' do
     published = create_published
-    published_at = published.published_at
+    published_at = published.reload.published_at
 
     assert_no_enqueued_jobs(only: PublishPostJob) do
       put page_post_path(@account, published),
@@ -271,7 +271,7 @@ class PostPublishingFlowTest < ActionDispatch::IntegrationTest
   end
 
   def assert_authoring_unchanged(*posts)
-    snapshots = posts.map { |post| [post.attributes, post.body.to_plain_text] }
+    snapshots = posts.map { |post| [post.reload.attributes, post.body.to_plain_text] }
     assert_no_difference -> { Post.unscoped.count } do
       assert_no_enqueued_jobs(only: [PublishPostJob, PingSearchEnginesJob]) { yield }
     end

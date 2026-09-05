@@ -89,7 +89,7 @@ class SubscribersImportWorkflowTest < ActiveSupport::TestCase
     unverified = subscribe(@account, 'unverified@example.com')
     unsubscribed = subscribe(@account, 'unsubscribed@example.com', verified_at: 3.days.ago, unsubscribed_at: 2.days.ago)
     foreign = subscribe(accounts(:new_user), 'shared@example.com', verified_at: 3.days.ago, unsubscribed_at: 2.days.ago)
-    originals = [active, unverified, unsubscribed, foreign].to_h { |subscription| [subscription.id, subscription.attributes] }
+    originals = [active, unverified, unsubscribed, foreign].to_h { |subscription| [subscription.id, subscription.reload.attributes] }
     import = build_import("active@example.com,unverified@example.com,unsubscribed@example.com,shared@example.com,new@example.com\n")
     import.update_column(:approved, true)
     clear_enqueued_jobs

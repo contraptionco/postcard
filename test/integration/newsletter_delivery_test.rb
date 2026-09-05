@@ -10,9 +10,6 @@ class NewsletterDeliveryTest < ActionDispatch::IntegrationTest
     @other_account = accounts(:new_user)
     @post = @account.posts.create!(subject: 'A note from the garden', body: '<p>The tomatoes are ready.</p>',
                                   published_at: Time.current)
-    # Premailer fetches this stylesheet while rendering; exercise the renderer with a deterministic external asset.
-    stub_request(:get, 'https://fonts.googleapis.com/css2?display=swap&family=Inter:wght@100..900')
-      .to_return(status: 200, body: '', headers: { 'Content-Type' => 'text/css' })
     ActionMailer::Base.deliveries.clear
     clear_enqueued_jobs
     clear_performed_jobs
