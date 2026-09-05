@@ -51,4 +51,11 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to page_path(@account)
     assert_not_equal 'another-home', @account.reload.slug
   end
+
+  test 'the page editor gives the theme color input its visible label' do
+    get edit_page_path(@account)
+    assert_response :success
+    assert_select 'label[for=account_accent_color]', text: 'Theme color'
+    assert_select 'input#account_accent_color[name="account[accent_color]"][type=color]', count: 1
+  end
 end

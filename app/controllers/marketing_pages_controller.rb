@@ -70,7 +70,7 @@ class MarketingPagesController < ApplicationController
   private
 
   def set_showcase
-    return if Rails.configuration.solo_mode || current_account
+    return if action_name == 'homepage' && (Rails.configuration.solo_mode || current_account)
 
     @featured_account = featured_account
     @primary_showcase_accounts = get_accounts(PRIMARY_SHOWCASED_PAGE_SLUGS)

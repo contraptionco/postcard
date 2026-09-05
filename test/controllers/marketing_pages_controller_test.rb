@@ -88,6 +88,16 @@ class MarketingPagesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to page_path(account)
   end
 
+  test 'signed in visitors still see the alternative page preview' do
+    account = accounts(:grandfathered_user)
+    account.update!(slug: 'philipithomas')
+    sign_in account
+    get '/alternative/revue'
+    assert_response :success
+    assert_select '[data-testid=homepage-preview]', count: 1
+    assert_select '#homepage-title', text: "Revue alternative that doesn't shut down"
+  end
+
   test 'solo mode renders the personal site' do
     Rails.configuration.solo_mode = true
     Rails.configuration.multiuser_mode = false
