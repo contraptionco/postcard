@@ -65,7 +65,11 @@ jobs:
 
   docker-smoke-test:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: docker build -t postcard:test .
+      - name: Exercise production Docker boot, homepage, and cache
+        timeout-minutes: 10
+        run: bash script/docker-smoke-test postcard:test
