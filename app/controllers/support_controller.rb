@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
-class CheckoutController < ApplicationController
+class SupportController < ApplicationController
   prepend_before_action :authenticate_account!
   before_action :set_account_from_path
   before_action :redirect_in_solo
+  layout 'dashboard'
 
-  def show
-    url = @account.checkout_url(page_url(@account), page_url(@account))
-    redirect_to url, status: :found, allow_other_host: true
-  end
+  def show; end
 
   private
 
