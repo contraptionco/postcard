@@ -11,7 +11,7 @@ class Account < ApplicationRecord
 
   visitable :ahoy_signup_visit
 
-  enum source: { signup: 0 }, _prefix: true, _default: :signup
+  enum :source, { signup: 0 }, prefix: true, default: :signup
 
   has_many :visits, class_name: 'Ahoy::Visit', foreign_key: :user_id, dependent: :destroy, inverse_of: :account
   has_many :subscriptions, dependent: :destroy

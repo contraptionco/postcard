@@ -16,7 +16,7 @@ services:
     name: postcard
     env: ruby
     plan: standard
-    buildCommand: "bundle install && npm install puppeteer && bundle exec rails assets:precompile && bundle exec rails db:migrate"
+    buildCommand: "bundle install && npm ci && bundle exec rails assets:precompile && bundle exec rails db:migrate"
     startCommand: "bundle exec puma -C config/puma.rb"
     numInstances: 1
     envVars:

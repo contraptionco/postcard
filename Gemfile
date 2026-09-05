@@ -3,7 +3,7 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '3.2.2'
+ruby '3.4.10'
 
 gem 'ahoy_email', '~> 2.1', '>= 2.1.3'
 gem 'ahoy_matey'
@@ -13,13 +13,13 @@ gem 'bcrypt', '~> 3.1.7'
 gem 'blazer'
 gem 'clearbit', '~> 0.3.3'
 gem 'dalli', '~> 3.2'
-gem 'devise', '~> 4.9'
+gem 'devise', '~> 5.0', '>= 5.0.4'
 gem 'dotenv-rails', '~> 2.8'
 gem 'friendly_id', '~> 5.4', '>= 5.4.2'
 gem 'geocoder'
 gem 'grover', '~> 1.1'
 gem 'honeypot-captcha', '~> 1.0'
-gem 'httparty', '~> 0.21.0'
+gem 'httparty', '~> 0.24'
 gem 'image_processing', '~> 1.2'
 gem 'importmap-rails', '~> 2'
 gem 'inline_svg', '~> 1.8'
@@ -38,8 +38,8 @@ gem 'possessive', '~> 1.0'
 gem 'aws-sdk-rails', '~> 5'
 gem 'aws-actionmailer-ses', '~> 1'
 gem 'premailer-rails', '~> 1.11'
-gem 'puma', '~> 6.4'
-gem 'rails', '~> 7.2.3', '>= 7.2.3.2'
+gem 'puma', '~> 7.2', '>= 7.2.1'
+gem 'rails', '~> 8.1.3', '>= 8.1.3.1'
 gem 'rails_heroicon', '~> 2.1.0'
 gem 'recaptcha'
 gem 'redis', '~> 4.0'
@@ -48,7 +48,7 @@ gem 'sitemap_generator', '~> 6.3'
 gem 'sprockets-rails'
 gem 'stimulus-rails', '~> 1.2.1'
 gem 'stripe', '~> 7.0'
-gem 'tailwindcss-rails', '2.0.25'
+gem 'tailwindcss-rails', '~> 2.7.9'
 gem 'truemail', '~> 2.7'
 gem 'turbo-rails', '1.4.0'
 gem 'twitter', '~> 7.0'
@@ -66,7 +66,8 @@ gem "pghero"
 
 group :development, :test, :preview do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
-  gem 'brakeman', '~> 5.0'
+  gem 'bundler-audit', '~> 0.9'
+  gem 'brakeman', '~> 8.0', '>= 8.0.6'
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
   gem 'debug', platforms: %i[mri mingw x64_mingw]
   gem 'faker', '~> 2.19'
@@ -92,6 +93,7 @@ group :development do
 end
 
 group :test do
+  gem 'minitest-mock'
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem 'capybara'
   gem 'selenium-webdriver'

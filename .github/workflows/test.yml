@@ -1,12 +1,24 @@
 name: Tests
 on: [push, pull_request]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
-    # Ubuntu 24.04 provides libvips >= 8.13 for patched Active Storage.
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        app-mode: [SOLO, MULTIUSER]
     services:
       postgres:
-        image: postgres:10
+        image: postgres:16
         env:
           POSTGRES_PASSWORD: postgres
         ports: ['5432:5432']
@@ -15,57 +27,59 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
-        options: --entrypoint redis-server
     env:
       RAILS_ENV: test
-      RAILS_MASTER_KEY: ${{ secrets.RAILS_TEST_KEY }}
+      APP_MODE: ${{ matrix.app-mode }}
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postcard_test
+      SECRET_KEY_BASE: test-only-secret-key-base
+      DISABLE_ANONYMOUS_TELEMETRY: 'true'
+      AWS_EC2_METADATA_DISABLED: 'true'
+      GROVER_NO_SANDBOX: 'true'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install --no-install-recommends -y libpq-dev libvips libvips-tools
       - name: Install Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2.2
           bundler-cache: true
       - name: Install Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v7
         with:
-          node-version: 18.12.1
-      - name: Install libvips
-        env:
-          DEBIAN_FRONTEND: noninteractive
+          node-version-file: .node-version
+          cache: npm
+      - name: Install JavaScript dependencies
+        run: npm ci
+      - name: Install browser libraries
+        run: sudo npx puppeteer browsers install chrome --install-deps
+      - name: Prepare database and assets
         run: |
-          # we only need the library
-          sudo apt-get update
-          sudo apt-get install --fix-missing -qq -o Acquire::Retries=3 libvips libvips-tools
-      - name: Setup the Rails application
-        env:
-          RAILS_ENV: test
-        run: |
-          sudo apt-get -yqq install libpq-dev
-          bundle install --no-deployment --jobs 4 --retry 3
-          cp config/database.github.yml config/database.yml
-          bundle exec rails db:create
-          bundle exec rails db:migrate
-          yarn --frozen-lockfile
-          bundle exec rake assets:precompile
+          bundle exec rails db:create db:migrate
+          bundle exec rails assets:precompile
       - name: Check Zeitwerk autoloading
         run: bundle exec rails zeitwerk:check
-      - name: Run unit tests (SOLO)
+      - name: Run all Rails tests
         run: bundle exec rails test:all
-      - name: Run unit tests (MULTIUSER)
-        env:
-          APP_MODE: MULTIUSER
-        run: bundle exec rails test:all
-      - name: Run brakeman
+      - name: Verify browser image generation
+        run: npm test
+      - name: Run Brakeman
         run: bundle exec brakeman
+      - name: Audit Ruby dependencies
+        run: bundle exec bundler-audit check --update
 
   docker-smoke-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
       - name: Build Docker image
         run: docker build -t postcard:test .
+      - name: Verify Rails boots without deployment credentials
+        run: >-
+          docker run --rm --entrypoint bundle
+          -e RAILS_ENV=build -e SECRET_KEY_BASE=DUMMY postcard:test
+          exec rails runner 'puts Rails.version'
+      - name: Verify the image includes a working browser
+        run: docker run --rm --entrypoint npm postcard:test test

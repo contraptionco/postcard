@@ -28,7 +28,7 @@ class Post < ApplicationRecord
   before_destroy :remove_pinned_by
   after_save :remove_pinned_by, if: proc { archived? or visibility_hidden? }
 
-  enum visibility: { public: 0, unlisted: 1, hidden: 2 }, _prefix: true, _default: :public
+  enum :visibility, { public: 0, unlisted: 1, hidden: 2 }, prefix: true, default: :public
 
   def published?
     published_at.present?

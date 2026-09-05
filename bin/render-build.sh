@@ -9,6 +9,4 @@ bundle exec rake assets:clean
 #bundle exec rake db:migrate
 bundle exec rake sitemap:refresh:no_ping
 
-npm install
-
-curl -g "https://api.honeybadger.io/v1/deploys?deploy[environment]=production&api_key=hbp_80nHltnYxlL3kfchmAYlpDRZqs60Ks0xc1WC"
+npm ci
