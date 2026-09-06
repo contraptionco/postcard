@@ -1,0 +1,14 @@
+# Pay remains on v5 until its billing/data migration has separate validation.
+# Every exception has an application regression test; do not expand this list
+# to silence a new advisory.
+ignore:
+  # Upstream's back-parameter XSS fix is backported in config/initializers/pay.rb.
+  # test/controllers/pay_payment_redirect_test.rb exercises the mounted payment
+  # route with script URLs, external URLs, invalid URLs, and a valid local path.
+  # https://github.com/pay-rails/pay/security/advisories/GHSA-cqf3-vpx7-rxhw
+  - CVE-2023-30614
+  # Pay 5 has no PaddleBillingController or /webhooks/paddle_billing route.
+  # Paddle Billing was introduced in Pay 7. Only Stripe is enabled, and the
+  # same integration test verifies Paddle/Braintree endpoints are not routed.
+  # https://github.com/pay-rails/pay/blob/main/UPGRADE.md#pay-60-to-pay-70
+  - GHSA-mjgf-xj26-9qf9

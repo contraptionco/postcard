@@ -21,36 +21,49 @@ This is the open source repository powering [postcard.page](https://postcard.pag
 
 Postcard requires the following dependencies to be installed on your system:
 
-- **Ruby** (3.2.2) and **Rails** (7.2.3.2 or a newer 7.2 patch release)
-- **PostgreSQL**
+- **Ruby** (3.4.10) and **Rails** (8.1.3.1 or a newer 8.1 patch release)
+- **PostgreSQL** (16 recommended; used in CI)
 - **libvips** (8.13 or newer; image processing library)
-- **Node.js** and **npm** (for open graph image generation with Puppeteer)
+- **Node.js** (24 LTS; exact version in `.node-version`) and **npm** (for Open Graph image generation with Puppeteer)
 
 ### Development quick start
 
 After installing dependencies:
 1. Install Ruby gems: `bundle install`
-2. Install JavaScript dependencies: `npm install puppeteer`
+2. Install locked JavaScript dependencies and the matching browser: `npm ci`
 3. Set up the database: `rails db:setup`
 4. Start the Rails server: `./bin/dev-solo`
 5. Access the application: [localtest.me:3000](http://localtest.me:3000)
 
 - (We cannot use straight localhost because of [hCaptcha constraints](https://docs.hcaptcha.com/#local-development))
 
-### Testing
+### Running checks
 
-Run the Rails suite in both application modes and the Chrome editor regressions:
+Use a dedicated local PostgreSQL test database; Rails tests reset its contents. Never use a production `DATABASE_URL` for these commands.
 
 ```sh
-bundle install
-npm ci
-RAILS_ENV=test bin/rails db:prepare
+RAILS_ENV=test bundle exec rails db:prepare
+bundle exec rails zeitwerk:check
 APP_MODE=SOLO COVERAGE=1 bin/test
 APP_MODE=MULTIUSER COVERAGE=1 bin/test
 npm test
+bundle exec brakeman
+bundle exec bundler-audit check --update
 ```
 
-Use a dedicated test database; if `DATABASE_URL` is set, it overrides the database in `config/database.yml`. See [the testing guide](docs/testing.md) for focused commands, coverage reports, and conventions for adding regression tests.
+See [the testing guide](docs/testing.md) for focused commands, coverage reports, and conventions for adding regression tests.
+
+CI runs the Rails suite separately in SOLO and MULTIUSER modes on PostgreSQL 16. It also builds production assets, checks autoloading, and renders PNGs through both Puppeteer and Grover. The Docker check runs the default production entrypoint against disposable PostgreSQL with dummy service credentials, requests the health endpoint, and verifies Puma's PID file. The browser tests require the browser downloaded by `npm ci`; on Linux, install its system libraries with `sudo npx puppeteer browsers install chrome --install-deps`.
+
+Trix is served from the `action_text-trix` gem so its version is locked and included in the Ruby dependency audit. Browser tests load the actual dashboard editor code and verify normal formatting and malicious pasted-content sanitization. Avoid replacing its importmap entry with a separately pinned CDN version.
+
+Ruby versions in `.ruby-version`, `.tool-versions`, `Gemfile`, and `Dockerfile` must stay aligned. Node uses `.node-version`, `.tool-versions`, and `Dockerfile`. Container and Render builds use the committed npm lockfile. The reviewed Puppeteer install script is approved for its exact version in `package.json`; review and refresh that entry when updating Puppeteer.
+
+### Payment dependency compatibility
+
+Pay remains on version 5 to keep existing Stripe subscription records compatible. Its newer major versions require explicit schema and data migrations; those must be tested as a [separate billing upgrade](https://github.com/contraptionco/postcard/issues/79). The application backports the payment return-link fix for [CVE-2023-30614](https://github.com/pay-rails/pay/security/advisories/GHSA-cqf3-vpx7-rxhw), restricts payment return links to local paths, and enables only the Stripe processor.
+
+The two documented exceptions in `.bundler-audit.yml` cover that tested backport and the Paddle Billing signature advisory, whose controller was introduced after Pay 5 and is absent from this application. Mounted-route tests cover the return link and unavailable Paddle/Braintree webhooks. Review these exceptions when upgrading Pay; they do not mean the payment dependency is current.
 
 ### Environment variables
 
@@ -223,7 +236,7 @@ It also includes a `render.yaml` for managed hosting on [Render](https://render.
 
 ### Upgrading for CVE-2026-66066
 
-Deploy the updated bundle to every web and background worker process. Rails 7.2.3.2 blocks unsafe libvips loaders and savers during boot, including direct libvips calls used to generate profile icons. The Docker image uses Debian Bookworm for a compatible libvips. For native installations, including Render's Ruby runtime, verify `vips --version` reports 8.13 or newer before deploying; patched Rails refuses to boot with an older libvips. The `ruby-vips` gem must be at least 2.2.1.
+Deploy the updated bundle to every web and background worker process. Rails 8.1.3.1 includes the fix that blocks unsafe libvips loaders and savers during boot, including direct libvips calls used to generate profile icons. The Docker image uses Debian Bookworm for a compatible libvips. For native installations, including Render's Ruby runtime, verify `vips --version` reports 8.13 or newer before deploying; patched Rails refuses to boot with an older libvips. The `ruby-vips` gem must be at least 2.2.1.
 
 Untrusted formats such as SVG, BMP, ICO, and PSD are no longer processed by libvips. Do not re-enable blocked loaders to restore support for those formats. Normal JPEG and PNG image processing remains supported.
 

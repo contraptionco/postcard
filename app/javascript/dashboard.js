@@ -1,11 +1,11 @@
 import * as ActiveStorage from "@rails/activestorage";
-import Trix from "trix";
+import "trix";
 import "@rails/actiontext";
 
 ActiveStorage.start();
 
 // Init
-window.Trix = Trix; // Don't need to bind to the window, but useful for debugging.
+const Trix = window.Trix;
 Trix.config.toolbar.getDefaultHTML = toolbarDefaultHTML;
 document.addEventListener(
   "trix-initialize",

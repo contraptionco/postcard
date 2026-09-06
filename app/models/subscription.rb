@@ -12,7 +12,7 @@ class Subscription < ApplicationRecord
 
   attr_accessor :verification_token
 
-  enum source: { signup: 0, invite: 1, import: 2 }, _prefix: true
+  enum :source, { signup: 0, invite: 1, import: 2 }, prefix: true
   validates :source, presence: true
 
   def active?

@@ -89,19 +89,4 @@ class ApplicationController < ActionController::Base
     render file: 'public/403.html', status: :forbidden, layout: :default if @account&.locked_at.present?
   end
 
-  # Add somewhere appropriate in your application
-  Grover.configure do |config|
-    config.options = {
-      'args' => [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu'
-      ]
-    }
-  end
 end

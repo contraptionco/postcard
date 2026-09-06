@@ -75,7 +75,7 @@ for mode in MULTIUSER SOLO; do
     -e AWS_EC2_METADATA_DISABLED=true \
     -e HCAPTCHA_SITE_KEY=smoke-only -e HCAPTCHA_SECRET_KEY=smoke-only \
     -e DISABLE_ANONYMOUS_TELEMETRY=true \
-    "$image" bundle exec puma -C config/puma.rb >/dev/null
+    "$image" >/dev/null
 
   # Wait without warming any controller cache. The entrypoint migrates first.
   for attempt in {1..60}; do
@@ -89,6 +89,7 @@ for mode in MULTIUSER SOLO; do
     sleep 2
   done
   expect_status /.postcard 200
+  docker exec "$app" test -s /rails/tmp/pids/server.pid
 
   # Exercise initial and repeat rendering, including pages that do not cache.
   for request_pass in first repeat; do

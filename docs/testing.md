@@ -42,7 +42,7 @@ These supplement the existing domain verification, authentication, account updat
 
 ## Coverage
 
-`COVERAGE=1` produces HTML and JSON reports in `coverage/SOLO/` or `coverage/MULTIUSER/`. Open the corresponding `index.html` to inspect line and branch coverage. CI uploads the reports produced during the run as the `rails-coverage` artifact, including when a test fails. Coverage files are ignored by Git.
+`COVERAGE=1` produces HTML and JSON reports in `coverage/SOLO/` or `coverage/MULTIUSER/`. Open the corresponding `index.html` to inspect line and branch coverage. CI uploads the reports produced during the run as the `rails-coverage-SOLO` and `rails-coverage-MULTIUSER` artifacts, including when a test fails. Coverage files are ignored by Git.
 
 Each invocation replaces its mode's report; focused runs do not combine with old results. Run `bin/test` without arguments in both modes for a complete report. This entry point starts coverage before Rails test preparation can load application code; starting coverage only in `test_helper` can miss boot-loaded models. The reports include unloaded Ruby files under `app/` and `lib/`, so untouched code remains visible. Coverage measures Ruby execution; the Chrome assertions run separately. There is no percentage gate: useful assertions and regressions take priority over raising a number.
 
