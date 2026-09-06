@@ -1,9 +1,7 @@
 <div class="z-10 dashboard-container">
   <ul role="list" class="grid grid-cols-1 gap-8 pt-2 md:grid-cols-2 lg:grid-cols-3">
     <% accounts.each_with_index do |account, ix| %>
-      <div class="flex items-stretch grid grid-cols-1 col-span-1 <%= (ix > 2) ? ( (ix > 3) ? 'hidden lg:block' : 'hidden md:block' ) : '' %>">
-        <%= render 'showcase_card', account: account %>
-      </div>
+      <%= render 'showcase_card', account: account, visibility: (ix > 3 ? 'hidden lg:block' : (ix > 2 ? 'hidden md:block' : '')) %>
     <% end %>
   </ul>
 </div>

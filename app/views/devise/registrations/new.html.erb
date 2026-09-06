@@ -34,7 +34,7 @@
 
     <div class="field">
       <%= f.label :name, "Your full name", class: 'form-label' %>
-      <%= f.text_field :name, autofocus: true, class: 'form-input', required: true %>
+      <%= f.text_field :name, autocomplete: "name", autofocus: true, class: 'form-input', required: true %>
     </div>
 
 
@@ -48,13 +48,13 @@
         <%= f.label :password, class: 'form-label' %>
 
         <% if @minimum_password_length %>
-          <div class="form-description">
+          <div id="password-requirements" class="form-description">
             At least <%= @minimum_password_length %> characters
           </div>
         <% end %>
       </div>
 
-      <%= f.password_field :password, autocomplete: "new-password", class: 'form-input', required: true %>
+      <%= f.password_field :password, autocomplete: "new-password", minlength: @minimum_password_length, aria: { describedby: (@minimum_password_length ? 'password-requirements' : nil) }, class: 'form-input', required: true %>
     </div>
 
     <div class="actions">
