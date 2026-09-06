@@ -11,8 +11,10 @@ class Post < ApplicationRecord
 
   has_rich_text :body
 
-  validates :subject, presence: true, length: { maximum: 255 }
-  validate :body_cannot_be_empty
+  # Presence validations only apply when publishing (not in :draft context)
+  validates :subject, presence: true, unless: :draft_context?
+  validates :subject, length: { maximum: 255 }
+  validate :body_cannot_be_empty, unless: :draft_context?
 
   default_scope { where(archived: false).order(published_at: :desc, updated_at: :desc) }
   scope :published, lambda {
@@ -28,7 +30,7 @@ class Post < ApplicationRecord
   before_destroy :remove_pinned_by
   after_save :remove_pinned_by, if: proc { archived? || visibility_hidden? || draft? }
 
-  enum visibility: { public: 0, unlisted: 1, hidden: 2 }, _prefix: true, _default: :public
+  enum :visibility, { public: 0, unlisted: 1, hidden: 2 }, prefix: true, default: :public
 
   def published?
     published_at.present?
@@ -66,6 +68,10 @@ class Post < ApplicationRecord
 
   def body_cannot_be_empty
     errors.add(:body, "can't be empty") if body.blank?
+  end
+
+  def draft_context?
+    validation_context == :draft
   end
 
   def remove_pinned_by

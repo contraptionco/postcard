@@ -1,0 +1,77 @@
+# frozen_string_literal: true
+
+require 'test_helper'
+
+class SubscriptionTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
+  setup do
+    @token = 'valid-verification-token'
+    @subscription = accounts(:new_user).subscriptions.create!(
+      email_address: EmailAddress.create!(email: 'verification@example.com'), source: :signup,
+      verification_digest: Subscription.digest(@token), verification_created_at: Time.current
+    )
+  end
+
+  test 'stale subscription copies verify once and preserve the original verification time' do
+    other_request = Subscription.find(@subscription.id)
+
+    assert_enqueued_jobs 1, only: ActionMailer::MailDeliveryJob do
+      assert @subscription.verify!(token: @token)
+      verified_at = @subscription.reload.verified_at
+      travel 1.hour do
+        assert other_request.verify!(token: @token)
+        assert_equal verified_at, other_request.reload.verified_at
+      end
+    end
+  end
+
+  test 'missing incorrect expired and malformed verification tokens fail without notifications' do
+    assert_no_enqueued_jobs do
+      refute @subscription.verify!(token: nil)
+      refute @subscription.verify!(token: 'incorrect')
+      travel 3.days do
+        refute @subscription.verify!(token: @token)
+      end
+      @subscription.update!(verification_digest: 'invalid digest')
+      refute @subscription.verify!(token: @token)
+    end
+    assert_nil @subscription.reload.verified_at
+  end
+
+  test 'unsubscribe revokes verification even for a stale in-flight request' do
+    assert @subscription.verify!(token: @token)
+    in_flight_request = Subscription.find(@subscription.id)
+    @subscription.unsubscribe!
+
+    refute in_flight_request.verify!(token: @token)
+    assert @subscription.reload.unsubscribed_at
+    assert_nil @subscription.verification_digest
+    assert_nil @subscription.verification_created_at
+  end
+
+  test 'fresh confirmation can reactivate a removed subscription without a duplicate owner notification' do
+    assert @subscription.verify!(token: @token)
+    original_verification = @subscription.reload.verified_at
+    @subscription.unsubscribe!
+
+    travel 1.day do
+      @subscription.update!(verification_digest: Subscription.digest('fresh'), verification_created_at: Time.current)
+
+      assert_no_enqueued_jobs(only: ActionMailer::MailDeliveryJob) do
+        assert @subscription.verify!(token: 'fresh')
+      end
+      assert @subscription.reload.active?
+      assert_operator @subscription.verified_at, :>, original_verification
+      assert_in_delta Time.current, @subscription.verified_at, 1.second
+    end
+  end
+
+  test 'confirmation email explains link expiry and how to request a replacement' do
+    @subscription.verification_token = @token
+    email = AccountMailer.subscription_verification(@subscription)
+    assert_includes email.body.decoded, 'This link expires in 48 hours.'
+    assert_includes email.body.decoded, 'subscribe again to request a new link.'
+  end
+
+end

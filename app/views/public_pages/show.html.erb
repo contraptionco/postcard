@@ -4,7 +4,7 @@
   <% end %>
 <% end %>
 
-<% cache [@account, "1"] do %>
+<% cache [@account, "1", request.base_url] do %>
   <%= render :partial => "public_pages/page", locals: {account: @account, disabled: false} %>
 <% end %>
 

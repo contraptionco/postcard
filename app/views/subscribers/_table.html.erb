@@ -6,6 +6,7 @@
           <tr>
             <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-950 sm:pl-6 md:pl-0">Email</th>
             <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-gray-950">Joined</th>
+            <th scope="col" class="relative py-3.5 px-3 text-right text-sm font-semibold text-gray-950"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -14,6 +15,11 @@
               <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-950 whitespace-nowrap sm:pl-6 md:pl-0"><%= subscription.email_address.email %></td>
               <td class="px-3 py-4 text-sm text-gray-700 whitespace-nowrap">
                 <%= local_time(subscription.verified_at, '%B %e, %Y') %>
+              </td>
+              <td class="px-3 py-4 text-right text-sm whitespace-nowrap">
+                <%= button_to 'Remove subscriber', page_subscriber_path(@account, subscription), method: :delete,
+                              params: { q: @query, page: @page }, class: 'link',
+                              form: { data: { turbo_confirm: "Remove #{subscription.email_address.email} from your mailing list? They will stop receiving your posts and can subscribe again by confirming their email." } } %>
               </td>
             </tr>
           <% end %>

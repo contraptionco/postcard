@@ -34,7 +34,7 @@
 
     <div class="field">
       <%= f.label :name, "Your full name", class: 'form-label' %>
-      <%= f.text_field :name, autofocus: true, class: 'form-input', required: true %>
+      <%= f.text_field :name, autocomplete: "name", autofocus: true, class: 'form-input', required: true %>
     </div>
 
 
@@ -48,22 +48,13 @@
         <%= f.label :password, class: 'form-label' %>
 
         <% if @minimum_password_length %>
-          <div class="form-description">
+          <div id="password-requirements" class="form-description">
             At least <%= @minimum_password_length %> characters
           </div>
         <% end %>
       </div>
 
-      <%= f.password_field :password, autocomplete: "new-password", class: 'form-input', required: true %>
-    </div>
-
-    <div class="field">
-      <div class="flex items-center">
-        <%= f.check_box :subscribe_to_newsletter, { checked: true, class: "h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded" } %>
-        <%= f.label :subscribe_to_newsletter, class: "ml-2 block text-sm text-gray-900" do %>
-          Subscribe to updates from <a href="https://contraption.co" target="_blank" rel="noopener" class="font-medium text-accent hover:underline">Contraption Co.</a>
-        <% end %>
-      </div>
+      <%= f.password_field :password, autocomplete: "new-password", minlength: @minimum_password_length, aria: { describedby: (@minimum_password_length ? 'password-requirements' : nil) }, class: 'form-input', required: true %>
     </div>
 
     <div class="actions">

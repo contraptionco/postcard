@@ -10,11 +10,6 @@ module Accounts
       resource.save
       yield resource if block_given?
       if resource.persisted?
-        # Handle newsletter subscription based on checkbox
-        if params[:account][:subscribe_to_newsletter] == '1'
-          SubscribeToContraptionGhostJob.perform_later(resource.email, resource.name)
-        end
-        
         if resource.active_for_authentication?
           set_flash_message! :notice, :signed_up
           sign_up(resource_name, resource)
@@ -50,16 +45,6 @@ module Accounts
         page_checkout_path(account)
       else
         page_path(account)
-      end
-    end
-
-    def update_resource(resource, params)
-      if resource.provider == 'google_oauth2'
-        params.delete('current_password')
-        resource.password = params['password']
-        resource.update_without_password(params)
-      else
-        resource.update_with_password(params)
       end
     end
 

@@ -34,4 +34,85 @@ class DestroyAccountJobTest < ActiveSupport::TestCase
     assert_equal 0, Audited::Audit.where(auditable_type: 'Account', auditable_id: @account.id).count
     assert EmailAddress.exists?(email_address.id), 'shared email addresses should not be deleted'
   end
+
+  test 'deletes recipient email history and archived posts while preserving shared recipient data' do
+    recipient = EmailAddress.create!(email: 'shared-recipient@example.com')
+    subscription = @account.subscriptions.create!(email_address: recipient, source: :signup)
+    message = EmailMessage.create!(account: @account, user: recipient, subscription: subscription,
+                                    to: recipient.email, subject: 'Private deleted-account history')
+    other_account = accounts(:grandfathered_user)
+    other_message = EmailMessage.create!(account: other_account, user: recipient, to: recipient.email)
+    archived_post = @account.posts.create!(subject: 'Archived post', body: 'Archived content', archived: true)
+
+    DestroyAccountJob.perform_now(@account)
+
+    refute EmailMessage.exists?(message.id)
+    refute Post.unscoped.exists?(archived_post.id)
+    assert EmailMessage.exists?(other_message.id)
+    assert EmailAddress.exists?(recipient.id)
+    assert Account.exists?(other_account.id)
+  end
+
+  test 'cancels pending account jobs but preserves unrelated shared and running jobs' do
+    post = @account.posts.create!(subject: 'Scheduled post', body: 'Post body')
+    other_account = accounts(:grandfathered_user)
+    pending = SolidQueue::Job.enqueue(AnalyticsSummaryEmailJob.new(@account), scheduled_at: 1.day.from_now)
+    post_job = SolidQueue::Job.enqueue(PublishPostJob.new(post), scheduled_at: 1.day.from_now)
+    unrelated = SolidQueue::Job.enqueue(AnalyticsSummaryEmailJob.new(other_account), scheduled_at: 1.day.from_now)
+    shared = SolidQueue::Job.enqueue(AnalyticsSummaryEmailJob.new(@account, other_account), scheduled_at: 1.day.from_now)
+    running = SolidQueue::Job.enqueue(AnalyticsSummaryEmailJob.new(@account))
+    running.ready_execution.destroy!
+    process = SolidQueue::Process.create!(kind: "Worker", last_heartbeat_at: Time.current, pid: 123, hostname: "test")
+    running.create_claimed_execution!(process: process)
+    destroyer = DestroyAccountJob.new(@account)
+    current_job = SolidQueue::Job.enqueue(destroyer)
+
+    destroyer.perform_now
+
+    refute SolidQueue::Job.exists?(pending.id)
+    refute SolidQueue::ScheduledExecution.exists?(job_id: pending.id)
+    refute SolidQueue::Job.exists?(post_job.id)
+    [unrelated, shared, running, current_job].each { |job| assert SolidQueue::Job.exists?(job.id) }
+  end
+
+  test 'cancels pending feedback mail and current and legacy signup jobs' do
+    feedback = @account.feedbacks.create!(path: '/support', message: 'Private feedback')
+    feedback_job = SolidQueue::Job.enqueue(ActionMailer::MailDeliveryJob.new(
+      'AdminMailer', 'new_feedback', 'deliver_now', args: [feedback]
+    ), scheduled_at: 1.day.from_now)
+    signup_job = SolidQueue::Job.enqueue(SubscribeToContraptionGhostJob.new(@account), scheduled_at: 1.day.from_now)
+    legacy_signup = SolidQueue::Job.enqueue(SubscribeToContraptionGhostJob.new(@account.email, @account.name), scheduled_at: 1.day.from_now)
+    other_account = accounts(:grandfathered_user)
+    other_signup = SolidQueue::Job.enqueue(SubscribeToContraptionGhostJob.new(other_account.email, other_account.name), scheduled_at: 1.day.from_now)
+    confirmation = SolidQueue::Job.enqueue(SubscribeToContraptionGhostJob.new(@account.email), scheduled_at: 1.day.from_now)
+    unrelated = SolidQueue::Job.enqueue(PostInAdminChatJob.new(@account.email, @account.name), scheduled_at: 1.day.from_now)
+
+    DestroyAccountJob.perform_now(@account)
+
+    [feedback_job, signup_job, legacy_signup].each { |job| refute SolidQueue::Job.exists?(job.id) }
+    [other_signup, confirmation, unrelated].each { |job| assert SolidQueue::Job.exists?(job.id) }
+    refute Feedback.exists?(feedback.id)
+  end
+
+  test 'removes the deleted accounts updates mail without deleting other recipients or shared addresses' do
+    updates = accounts(:grandfathered_user)
+    updates.update_columns(slug: 'updates')
+    recipient = EmailAddress.create!(email: @account.email)
+    membership = updates.subscriptions.create!(email_address: recipient, source: :signup, verified_at: Time.current)
+    message = EmailMessage.create!(account: updates, user: recipient, subscription: membership, to: recipient.email)
+    another_recipient = EmailAddress.create!(email: 'another-updates-reader@example.com')
+    other_membership = updates.subscriptions.create!(email_address: another_recipient, source: :signup, verified_at: Time.current)
+    other_message = EmailMessage.create!(account: updates, user: another_recipient,
+                                         subscription: other_membership, to: another_recipient.email)
+
+    DestroyAccountJob.perform_now(@account)
+
+    refute EmailMessage.exists?(message.id)
+    refute Subscription.exists?(membership.id)
+    assert EmailMessage.exists?(other_message.id)
+    assert Subscription.exists?(other_membership.id)
+    assert EmailAddress.exists?(recipient.id)
+    assert Account.exists?(updates.id)
+  end
+
 end

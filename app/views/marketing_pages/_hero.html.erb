@@ -1,62 +1,26 @@
-<div class="relative overflow-hidden bg-white isolate">
-  <div class="dashboard-container lg:flex lg:py-12">
-    <div class="max-w-2xl lg:mx-0 lg:max-w-xl lg:flex-shrink-0 lg:flex lg:flex-col lg:justify-center">
-      <div>
-        <div class="mt-8 lg:mt-0">
-          <span class="homepage-label">Personal website + newsletter</span>
-
-          <%#
-          <a href="#" class="inline-flex space-x-6">
-            <span class="px-3 py-1 text-sm font-semibold leading-6 rounded-full text-accent bg-accent/10 ring-1 ring-inset ring-accent/10">What's new</span>
-            <span class="inline-flex items-center space-x-2 text-sm font-medium leading-6 text-gray-600">
-              <span>Just shipped v1.0</span>
-              < heroicon "chevron-right", class: "w-5 h-5 text-gray-400", variant: :mini >
-            </span>
-          </a>
-          %>
-        </div>
-        <h1 class="mt-6 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-          <% if title %>
-            <%= raw title %>
-          <% else %>
-            A personal website for everybody on the internet
-          <% end %>
-        </h1>
-        <p class="mt-6 text-lg leading-8 text-gray-600">
-          Publish a site in 5 minutes, no code or design required. Host on your own domain. Add it to your social profiles, email signature, resume, and more.
-        </p>
-        <div class="flex items-center mt-9 gap-x-6">
-          <a href="<%= new_registration_path('account') %>" class="btn btn-primary btn-big">
-            Start your free trial
-            <%= render :partial => "shared/button_loading_arrow" %>
-          </a>
-          <%#>
-          <a href="#" class="text-base font-semibold leading-7 text-gray-900">Learn more <span aria-hidden="true">→</span></a>
-          %>
-        </div>
+<section class="bg-white" aria-labelledby="homepage-title">
+  <div class="dashboard-container grid gap-10 py-6 sm:py-10 lg:grid-cols-2 lg:items-center lg:gap-12 lg:py-12">
+    <div class="min-w-0 max-w-2xl">
+      <span class="homepage-label">Personal website + newsletter</span>
+      <h1 id="homepage-title" class="mt-6 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl xl:text-6xl">
+        <% if local_assigns[:title].present? %>
+          <%= raw local_assigns[:title] %>
+        <% else %>
+          A personal website for everybody on the internet
+        <% end %>
+      </h1>
+      <p class="mt-6 text-lg leading-8 text-gray-600">
+        Publish a site in 5 minutes, no code or design required. Host on your own domain. Add it to your social profiles, email signature, resume, and more.
+      </p>
+      <div class="mt-9">
+        <a href="<%= new_registration_path('account') %>" class="btn btn-primary btn-big">
+          Start your free trial
+          <%= render "shared/button_loading_arrow" %>
+        </a>
       </div>
     </div>
     <% if @featured_account %>
-    <div class="flex max-w-2xl mt-16 sm:mt-24 lg:ml-10 lg:mt-0 lg:mr-0 lg:max-w-none xl:ml-32">
-      <div class="flex-none max-w-3xl sm:max-w-5xl lg:max-w-none">
-        <div class="p-2 overflow-y-hidden rounded-xl bg-gray-900/5 ring-1 ring-inset ring-gray-900/10 lg:rounded-2xl lg:p-4" style="height: 65vh; min-height: 600px;">
-          <div class="h-full rounded-md shadow-2xl ring-1 ring-gray-900/10">
-            <a
-              class="absolute z-10 w-full h-full"
-              href="<%= @featured_account.url %>"
-              target="_blank"
-              rel="noopener"
-            ></a>
-            <div class="w-full h-full overflow-y-hidden" >
-              <%= render "public_pages/page", account: @featured_account, disabled: true %>
-            </div>
-          </div>
-          <%#
-            <img src="https://tailwindui.com/img/component-images/project-app-screenshot.png" alt="App screenshot" width="2432" height="1442" class="w-[76rem] rounded-md shadow-2xl ring-1 ring-gray-900/10">
-          %>
-        </div>
-      </div>
-    </div>
+      <%= render "hero_preview", account: @featured_account %>
     <% end %>
   </div>
-</div>
+</section>

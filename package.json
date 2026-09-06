@@ -8,11 +8,11 @@
     "test": "test"
   },
   "dependencies": {
-    "puppeteer": "^22.10.0"
+    "puppeteer": "^25.10.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test test/javascript/*.test.cjs"
   },
   "repository": {
     "type": "git",
@@ -23,5 +23,11 @@
   "bugs": {
     "url": "https://github.com/contraptionco/postcard/issues"
   },
-  "homepage": "https://github.com/contraptionco/postcard#readme"
+  "homepage": "https://github.com/contraptionco/postcard#readme",
+  "engines": {
+    "node": "24.x"
+  },
+  "allowScripts": {
+    "puppeteer@25.10.0": true
+  }
 }

@@ -3,7 +3,9 @@
 <div class="container flex flex-col items-center justify-center h-screen">
   <div class="w-full prose text-center max-w-none">
     <h1 class="dashboard-title">
-      <% if @email_message.subscription&.account %>
+      <% if @email_message.subscription.nil? || @email_message.subscription.unsubscribed_at.present? %>
+        You are unsubscribed
+      <% elsif @email_message.subscription.account %>
         Don't want emails any more from
         <%=
           link_to @email_message.subscription.account.name,
@@ -15,9 +17,11 @@
     </h1>
   </div>
 
+  <% if @email_message.subscription && @email_message.subscription.unsubscribed_at.nil? %>
   <div class="pt-6">
     <%= link_to 'Unsubscribe', request.path,
       data: {turbo_method: :delete },
       class: 'btn btn-primary' %>
   </div>
+  <% end %>
 </div>

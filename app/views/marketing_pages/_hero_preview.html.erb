@@ -1,0 +1,24 @@
+<div class="min-w-0 w-full max-w-2xl lg:justify-self-end" data-testid="homepage-preview">
+  <a href="<%= account.url %>" target="_blank" rel="noopener"
+     aria-label="Visit <%= account.name %>'s website (opens in a new tab)"
+     class="block overflow-hidden rounded-xl bg-gray-075 p-2 ring-1 ring-inset ring-gray-200 focus:outline-none focus:ring-2 focus:ring-accent lg:p-4">
+    <div class="overflow-hidden rounded-lg bg-white shadow-lg">
+      <%= render "public_pages/page/cover", picture: account.cover, alt: "Cover photo for #{account.name}", classes: "h-32 sm:h-48", sizes: '(min-width: 1024px) 50vw, 100vw' %>
+      <div class="px-5 pb-6 sm:px-8 sm:pb-8">
+        <div class="relative -mt-10 mb-4">
+          <% if account.photo.attached? %>
+            <%= render "shared/square_picture_variants", picture: account.photo, size: 80, classes: "h-20 w-20 rounded-full ring-4 ring-white bg-white", alt: account.name %>
+          <% else %>
+            <%= image_tag "logo/icon.png", class: "h-20 w-20 rounded-full ring-4 ring-white bg-white", alt: "", width: 80, height: 80 %>
+          <% end %>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-950 break-words sm:text-3xl"><%= account.name %></h2>
+        <p class="mt-4 text-base leading-7 text-gray-700 break-words"><%= truncate(account.description.to_plain_text.squish, length: 340, separator: ' ') %></p>
+        <div class="mt-6 border-t border-gray-100 pt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span class="min-w-0 text-gray-600 break-all"><%= account.host %></span>
+          <span class="font-medium text-accent">Visit website →</span>
+        </div>
+      </div>
+    </div>
+  </a>
+</div>

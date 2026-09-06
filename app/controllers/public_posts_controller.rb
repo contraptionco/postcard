@@ -11,7 +11,7 @@ class PublicPostsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to @account.url unless @account.show_posts_page?
+        redirect_to @account.url if @latest_post.nil? || !@account.show_posts_page?
       end
       format.rss { render :layout => false }
       format.md { render plain: posts_index_markdown, content_type: 'text/markdown' }
@@ -29,7 +29,7 @@ class PublicPostsController < ApplicationController
   end
 
   def og_image
-    png = Rails.cache.fetch("post-#{@post.id}-#{@post.updated_at.to_i}-og-img-v0") do
+    png = Rails.cache.fetch("post-#{@post.id}-#{@post.updated_at.to_i}-og-img-v1") do
       generate_og_image
     end
 

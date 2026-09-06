@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class EnrichAccountJob < ApplicationJob
+class EnrichAccountJob < RecordBatchJob
   queue_as :critical
 
   def perform(*accounts)
