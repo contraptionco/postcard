@@ -1,0 +1,45 @@
+<h1 class="dashboard-title">Account search</h1>
+<p class="mt-2 text-sm text-gray-500">Find an account by its full email address.</p>
+
+<%= form_with url: admin_accounts_search_path, method: :post, data: { turbo: false }, class: 'my-6 flex flex-col gap-3 sm:flex-row sm:items-end' do |form| %>
+  <div class="flex-grow">
+    <%= form.label :account_email, 'Email address', class: 'form-label' %>
+    <%= form.email_field :account_email, value: @query, placeholder: 'reader@example.com', class: 'form-input mt-1', autofocus: true %>
+  </div>
+  <%= form.submit 'Search', class: 'btn btn-primary shrink-0' %>
+<% end %>
+
+<% if @query.present? %>
+  <% if @found_account.present? %>
+    <section aria-label="Account details" class="rounded border border-gray-200 p-4 sm:p-6">
+      <div class="flex items-center gap-4">
+        <% if @found_account.photo.attached? %>
+          <%= image_tag cdn_proxy_url(@found_account.photo.variant(:thumb)), alt: "#{@found_account.name}'s profile photo", class: 'h-16 w-16 shrink-0 rounded-full object-cover' %>
+        <% else %>
+          <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100" aria-hidden="true">
+            <%= @found_account.name&.first&.upcase %>
+          </div>
+        <% end %>
+        <div class="min-w-0">
+          <h2 class="font-semibold break-words"><%= @found_account.name %></h2>
+          <p class="text-sm text-gray-500 break-all"><%= @found_account.email %></p>
+          <p class="text-sm text-gray-500 break-all">@<%= @found_account.slug %></p>
+        </div>
+      </div>
+
+      <div class="my-6 flex flex-wrap gap-3">
+        <%= link_to 'View dashboard', page_path(@found_account), class: 'btn btn-primary' %>
+        <%= link_to 'View public page', @found_account.url, target: '_blank', rel: 'noopener', class: 'btn btn-secondary' %>
+      </div>
+
+      <dl class="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4 text-sm">
+        <div><dt class="text-gray-500">Created</dt><dd><%= @found_account.created_at.to_date.to_fs(:long) %></dd></div>
+        <div><dt class="text-gray-500">Posts</dt><dd><%= @found_account.posts.count %></dd></div>
+        <div><dt class="text-gray-500">Subscribers</dt><dd><%= @found_account.subscriptions.active.count %></dd></div>
+        <div><dt class="text-gray-500">Subscription</dt><dd><%= @found_account.active_subscription? ? 'Active' : 'None' %></dd></div>
+      </dl>
+    </section>
+  <% else %>
+    <p role="status" class="rounded border border-gray-200 p-4 text-sm">No account found for <strong class="break-all"><%= @query %></strong>.</p>
+  <% end %>
+<% end %>
