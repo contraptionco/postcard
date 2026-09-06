@@ -20,8 +20,8 @@ class Subscription < ApplicationRecord
   end
 
   def unsubscribe!
-    self.unsubscribed_at = Time.zone.now
-    save!
+    update!(unsubscribed_at: Time.current, verification_digest: nil, verification_created_at: nil)
+    self.verification_token = nil
   end
 
   def self.digest(string)
