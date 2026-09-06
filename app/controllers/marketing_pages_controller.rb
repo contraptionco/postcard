@@ -95,6 +95,8 @@ class MarketingPagesController < ApplicationController
   end
 
   def featured_account
+    # Read the current account and pin on every request. Caching these records can
+    # expose a post after it is hidden, unpublished, archived or no longer pinned.
     showcase_accounts.includes(pinned_post: :rich_text_body).find_by(slug: 'philipithomas')
   end
 end

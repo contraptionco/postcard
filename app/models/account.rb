@@ -31,6 +31,7 @@ class Account < ApplicationRecord
   validate :email_is_valid, on: :create
   validates :name, presence: true
   validates :accent_color, format: { with: /\A#[0-9a-fA-F]{6}\z/ }, allow_nil: true
+  validate :pinned_post_can_be_featured, if: :will_save_change_to_pinned_post_id?
   VALID_SLUG_REGEX = /\A[a-z0-9]+(-[a-z0-9]+)*\z/
   validates :slug, presence: true, length: { minimum: 2, maximum: 255 },
                    format: { with: VALID_SLUG_REGEX, message: "can only contain letters, numbers and '-'" },
@@ -125,6 +126,12 @@ class Account < ApplicationRecord
 
   def show_posts_page?
     posts.published.length > 1
+  end
+
+  # Older records may contain a pin that predates the ownership validation.
+  # Never render those posts on a public account page.
+  def public_pinned_post
+    pinned_post if pinnable_post?(pinned_post)
   end
 
   def active_subscription?
@@ -312,6 +319,17 @@ class Account < ApplicationRecord
   end
 
   private
+
+  def pinnable_post?(post)
+    post.present? && post.account_id == id && post.published? && !post.archived? && !post.visibility_hidden?
+  end
+
+  def pinned_post_can_be_featured
+    return if pinned_post_id.blank?
+    return if pinnable_post?(pinned_post)
+
+    errors.add(:pinned_post, 'must be one of your published, visible posts')
+  end
 
   def updates_subscription_email_cutoffs
     addresses = {}

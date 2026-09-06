@@ -15,9 +15,9 @@ simple_mode = defined?(:simple_mode) ? simple_mode : false
 
   <div>
     <div class="w-full py-12 mt-12 bg-gray-050">
-      <% if account.pinned_post.present? %>
+      <% if (pinned_post = account.public_pinned_post) %>
         <div class="pb-12 public-page-container">
-          <%= render :partial => 'shared/post_card', locals: { post: account.pinned_post } %>
+          <%= render :partial => 'shared/post_card', locals: { post: pinned_post } %>
         </div>
       <% end %>
 

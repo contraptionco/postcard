@@ -7,7 +7,9 @@ class AccountController < ApplicationController
   def update
     @old_pinned_post = @account.pinned_post
 
-    @account.update!(account_params)
+    unless @account.update(account_params)
+      return render plain: @account.errors.full_messages.to_sentence, status: :unprocessable_entity
+    end
 
     respond_to do |format|
       format.html { redirect_to page_posts_path(@account), notice: 'Success', status: :see_other }

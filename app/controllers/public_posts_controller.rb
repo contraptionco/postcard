@@ -55,6 +55,7 @@ class PublicPostsController < ApplicationController
 
   def set_post
     @post = @account.posts.published.friendly.find(params[:slug])
+    response.set_header('X-Robots-Tag', 'noindex, nofollow') if @post.visibility_hidden?
 
     return if @post.slug == params[:slug]
 
