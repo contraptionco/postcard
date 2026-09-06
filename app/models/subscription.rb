@@ -33,23 +33,33 @@ class Subscription < ApplicationRecord
     BCrypt::Password.create(string, cost: cost)
   end
 
+  VERIFICATION_TOKEN_LIFETIME = 2.days
+
   def valid_verification_token?(token)
-    return false if verification_digest.nil?
+    return false if token.blank? || verification_digest.blank? || verification_created_at.blank?
+    return false if verification_created_at < VERIFICATION_TOKEN_LIFETIME.ago
 
     BCrypt::Password.new(verification_digest).is_password?(token)
+  rescue BCrypt::Errors::InvalidHash
+    false
   end
 
   def self.new_token
     SecureRandom.urlsafe_base64
   end
 
-  def verify!
-    already_verified = verified_at.present?
-    self.verified_at = Time.zone.now
-    self.unsubscribed_at = nil
-    save!
+  def verify!(token:)
+    with_lock do
+      return false unless valid_verification_token?(token)
 
-    send_new_subscriber_notification unless already_verified
+      already_verified = verified_at.present?
+      self.verified_at = Time.current unless active?
+      self.unsubscribed_at = nil
+      save!
+
+      send_new_subscriber_notification unless already_verified
+      true
+    end
   end
 
   # Sends verification email.

@@ -117,6 +117,8 @@ class Account < ApplicationRecord
   end
 
   def accent_color_rgb
+    return if accent_color.blank?
+
     rgb = accent_color.match(/^#(..)(..)(..)$/).captures.map(&:hex)
     "rgb(#{rgb.join(', ')})"
   end
@@ -183,14 +185,24 @@ class Account < ApplicationRecord
     updates = Account.find_by(slug: 'updates')
     return if updates.blank?
 
-    email_address = EmailAddress.find_by(email: email)
-    return if email_address.blank?
+    # Use this account's recorded email changes before deletion removes its
+    # audits. An address reused by another account or a later newsletter signup
+    # is no longer evidence that the membership belongs to this account.
+    addresses = updates_subscription_email_cutoffs
+    claimed_addresses = Account.where.not(id: id).where(email: addresses.keys).pluck(:email)
+    recipient_ids = EmailAddress.where(email: addresses.keys - claimed_addresses).select(:id)
 
-    subscription = Subscription.find_by(account: updates, email_address: email_address)
-    return if subscription.blank?
+    updates.subscriptions.where(email_address_id: recipient_ids).includes(:email_address).find_each do |subscription|
+      cutoff = addresses[subscription.email_address.email]
+      reader_activity = [subscription.created_at, subscription.verified_at, subscription.verification_created_at]
+      next if cutoff && reader_activity.compact.any? { |time| time > cutoff }
 
-    subscription.destroy!
-    Rails.logger.info "Unsubscribed #{email} from updates"
+      # These messages belong to the updates author, so deleting this account's
+      # own email history does not include them. Remove them before their only
+      # account-membership reference disappears.
+      EmailMessage.where(subscription_id: subscription.id).in_batches.delete_all
+      subscription.destroy!
+    end
   end
 
   def generate_icon
@@ -251,6 +263,7 @@ class Account < ApplicationRecord
       a.password = Devise.friendly_token[0, 20]
       a.name = auth.info.name
     end
+    return nil unless account.persisted?
 
     if account.admin?
       Rails.logger.error "Admin account #{account.email} cannot use oauth to log in"
@@ -299,6 +312,18 @@ class Account < ApplicationRecord
   end
 
   private
+
+  def updates_subscription_email_cutoffs
+    addresses = {}
+    audits.where("audited_changes ? 'email'").reorder(:version).pluck(:audited_changes, :created_at).each do |changes, changed_at|
+      change = changes['email']
+      next unless change.is_a?(Array) && change.first.is_a?(String) && change.first != change.last
+
+      addresses[change.first.downcase] = changed_at
+    end
+    addresses[email.downcase] = nil
+    addresses
+  end
 
   def icon_circle_mask
     # Supersample the circle for smooth edges without using the blocked SVG loader.

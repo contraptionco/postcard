@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PingSearchEnginesJob < ApplicationJob
+class PingSearchEnginesJob < RecordBatchJob
   queue_as :low
 
   def perform(*accounts)

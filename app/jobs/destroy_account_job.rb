@@ -8,17 +8,17 @@
 class DestroyAccountJob < ApplicationJob
   queue_as :default
 
-  # If the job retries after the account row is already gone, there is nothing
-  # left to do.
-  discard_on ActiveJob::DeserializationError
-
   def perform(account)
     account_id = account.id
 
+    purge_pending_jobs(account)
     purge_analytics(account)
 
     # Bulk-delete the large tables without per-row callbacks or audits.
-    account.messages.in_batches.delete_all
+    EmailMessage.where(account_id: account_id)
+                .or(EmailMessage.where(user: account))
+                .or(EmailMessage.where(subscription_id: account.subscriptions.select(:id)))
+                .in_batches.delete_all
     account.subscriptions.in_batches.delete_all
 
     # Pay does not clean up its records when the owner is destroyed. Billing
@@ -27,12 +27,63 @@ class DestroyAccountJob < ApplicationJob
 
     # Destroys the remainder (posts, domains, imports, feedbacks, attachments)
     # with normal callbacks.
+    # The Account association only includes unarchived posts by default.
+    Post.unscoped.where(account_id: account_id).find_each(&:destroy!)
     account.destroy!
 
     purge_audits(account_id)
   end
 
   private
+
+  def purge_pending_jobs(account)
+    SolidQueue::Job.where(finished_at: nil).where.not(active_job_id: job_id).find_each do |queued_job|
+      references = global_ids_in(queued_job.arguments)
+      owned_references = references.any? && references.all? { |reference| account_owns_reference?(account, reference) }
+      next unless owned_references || legacy_signup_job?(account, queued_job)
+
+      # Solid Queue locks the execution before deletion and refuses to discard
+      # claimed jobs, avoiding a race with workers claiming ready executions.
+      queued_job.discard
+    rescue ActiveRecord::RecordNotFound, SolidQueue::Execution::UndiscardableError
+      # A worker may claim or finish a queued job while this sweep runs.
+      next
+    end
+  end
+
+  # Older signup jobs serialized both email and name rather than an Account.
+  # Match that exact job/signature only; subscriber confirmations have one
+  # argument and unrelated strings are not ownership evidence.
+  def legacy_signup_job?(account, queued_job)
+    queued_job.class_name == 'SubscribeToContraptionGhostJob' &&
+      queued_job.arguments['arguments'] == [account.email, account.name]
+  end
+
+  def global_ids_in(value)
+    case value
+    when Hash
+      return [value['_aj_globalid']] if value.key?('_aj_globalid')
+
+      value.values.flat_map { |nested| global_ids_in(nested) }
+    when Array
+      value.flat_map { |nested| global_ids_in(nested) }
+    else
+      []
+    end
+  end
+
+  def account_owns_reference?(account, reference)
+    gid = GlobalID.parse(reference)
+    return false unless gid && gid.app == GlobalID.app
+    return gid.model_id == account.id.to_s if gid.model_name == 'Account'
+
+    models = { 'Post' => Post, 'Subscription' => Subscription, 'SubscribersImport' => SubscribersImport,
+               'Domain' => Domain, 'EmailMessage' => EmailMessage, 'Feedback' => Feedback }
+    model = models[gid.model_name]
+    model && model.unscoped.where(account_id: account.id, id: gid.model_id).exists?
+  rescue URI::InvalidURIError, ArgumentError
+    false
+  end
 
   def purge_analytics(account)
     # Page views recorded for visitors to the account's page. Uses the GIN
