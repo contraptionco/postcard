@@ -13,7 +13,7 @@
 
 <% title "Posts" %>
 
-<% cache @account do %>
+<% cache [@account, request.base_url] do %>
   <div class="flex flex-col w-full bg-white">
     <div class="flex-grow">
       <div>

@@ -4,3 +4,6 @@
 <span class="block pt-1 text-xs text-gray-900">
   <%= local_time(post.published_at.present? ? post.published_at : post.updated_at, '%B %e, %Y') %>
 </span>
+<% if local_assigns.fetch(:show_markdown, false) %>
+  <%= link_to "Read as Markdown", public_post_markdown_url(post), class: "mt-2 inline-block py-1 text-xs text-gray-700 underline", type: "text/markdown" %>
+<% end %>

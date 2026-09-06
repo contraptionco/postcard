@@ -9,7 +9,7 @@ disabled = defined?(:disabled) ? disabled : false
     <%= render :partial => 'public_pages/page/profile_photo', locals: {account: post.account} %>
     <%= render :partial => 'public_pages/page/title', locals: {title: post.subject } %>
     <div class="public-page-container pt-2">
-      <%= render :partial => 'posts/byline', locals: {post: post } %>
+      <%= render :partial => 'posts/byline', locals: {post: post, show_markdown: !disabled && post.published? } %>
     </div>
     <%= render :partial => 'public_pages/page/body', locals: {body: post.body} %>
   </div>
