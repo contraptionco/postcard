@@ -173,7 +173,8 @@ GEM
       addressable
       ssrf_filter (~> 1.5)
     csv (3.3.0)
-    dalli (3.2.8)
+    dalli (3.2.13)
+      logger
     date (3.5.1)
     debug (1.9.2)
       irb (~> 1.10)
@@ -366,8 +367,8 @@ GEM
       hashie (>= 3.4.6)
       rack (>= 2.2.3)
       rack-protection
-    omniauth-google-oauth2 (1.1.2)
-      jwt (>= 2.0)
+    omniauth-google-oauth2 (1.2.3)
+      jwt (>= 2.9.2, < 4)
       oauth2 (~> 2.0)
       omniauth (~> 2.0)
       omniauth-oauth2 (~> 1.8)
@@ -644,7 +645,7 @@ DEPENDENCIES
   capybara
   clearbit (~> 0.3.3)
   cloudflare-rails
-  dalli (~> 3.2)
+  dalli (~> 3.2, >= 3.2.13)
   debug
   devise (~> 5.0, >= 5.0.4)
   dotenv-rails (~> 2.8)
@@ -669,7 +670,7 @@ DEPENDENCIES
   mission_control-jobs (~> 0.2.1)
   name_of_person (~> 1.1)
   omniauth (~> 2.1)
-  omniauth-google-oauth2 (~> 1.1)
+  omniauth-google-oauth2 (~> 1.2.3)
   omniauth-rails_csrf_protection (~> 1.0)
   pay (~> 5.0)
   pg (~> 1.1)
