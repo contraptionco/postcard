@@ -2,6 +2,10 @@
 
 require 'active_support/core_ext/integer/time'
 
+# Register the real Google middleware for cookie and callback integration tests.
+ENV['GOOGLE_OAUTH_CLIENT_ID'] ||= 'test-client'
+ENV['GOOGLE_OAUTH_CLIENT_SECRET'] ||= 'test-secret'
+
 # The test environment is used exclusively to run your application's
 # test suite. You never need to work with it otherwise. Remember that
 # your test database is "scratch space" for the test suite and is wiped

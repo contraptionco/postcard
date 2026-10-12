@@ -17,3 +17,7 @@ Ahoy.exclude_method = lambda do |_controller, request|
     request.host == Rails.configuration.cdn_host &&
     Rails.configuration.cdn_host != Rails.configuration.base_host
 end
+
+Rails.application.config.to_prepare do
+  Ahoy::BaseController.include(AhoyReadOnlySession)
+end
